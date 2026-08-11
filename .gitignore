@@ -2,3 +2,4 @@ results/*.json
 __pycache__/
 *.pyc
 colab/sessions_ready.json
+*.log
