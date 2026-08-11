@@ -825,3 +825,68 @@ def numpy_opt10(W, x, cfg):
     return b["out"][None]
 
 IMPLS["numpy_opt10"] = numpy_opt10
+
+def numpy_opt11(W, x, cfg):
+    """opt10 + local binding of weights/caches (fewer dict lookups per call)."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    emb = W["emb"]
+    h = np.take(emb, x[0], axis=0)
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    p = _prep_weights_v2(W, cfg)
+    maskadd = _maskadd(S)
+    b = _bufs(cfg)
+    Wstats = _stats_w3(d, cfg.eps)
+    ones = np.ones((S, 1), np.float32)
+    hc = b["hc3"]
+    st = np.empty((S, 2), np.float32)
+    qkvW = p["qkv"]; db1 = p["db1"]; w1 = p["w1"]; w2 = p["w2"]; wo = p["wo"]
+    A3 = p["A3"]; db3 = p["db3"]
+    ff = b["ff"]; qkv = b["qkv"]; att = b["att"]; e = b["e"]; den = b["den"]
+    ctx = b["ctx"]; proj = b["proj"]; up = b["up"]; out = b["out"]
+    for i in range(cfg.n_layers):
+        np.multiply(h, h, out=ff)
+        np.concatenate([h, ff, ones], axis=-1, out=hc)
+        np.matmul(hc, Wstats, out=st)
+        mu = st[:, :1]
+        rstd = (st[:, 1:] - mu * mu) ** -0.5
+        np.subtract(h, mu, out=ff)
+        np.matmul(ff, qkvW[i], out=qkv)
+        qkv *= rstd
+        if db1[i] is not None: qkv += db1[i]
+        Q = qkv[:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        K = qkv[:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        V = qkv[:, 2*d:3*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        np.matmul(Q, K.transpose(0, 2, 1), out=att)
+        att += maskadd
+        np.exp(att, out=e)
+        np.matmul(e, ones, out=den)
+        np.matmul(e, V, out=ctx)
+        ctx /= den
+        np.matmul(ctx.transpose(1, 0, 2).reshape(S, d), wo[i], out=proj)
+        np.add(h, proj, out=h)
+        np.multiply(h, h, out=ff)
+        np.concatenate([h, ff, ones], axis=-1, out=hc)
+        np.matmul(hc, Wstats, out=st)
+        mu = st[:, :1]
+        rstd = (st[:, 1:] - mu * mu) ** -0.5
+        np.subtract(h, mu, out=ff)
+        np.maximum(ff, 0, out=ff)
+        ff *= rstd
+        np.matmul(ff, w1[i], out=up)
+        np.matmul(up, w2[i], out=ff)
+        np.add(h, ff, out=h)
+    np.multiply(h, h, out=ff)
+    np.concatenate([h, ff, ones], axis=-1, out=hc)
+    np.matmul(hc, Wstats, out=st)
+    mu = st[:, :1]
+    rstd = (st[:, 1:] - mu * mu) ** -0.5
+    np.subtract(h, mu, out=ff)
+    np.matmul(ff, A3, out=out)
+    out *= rstd
+    if db3 is not None: out += db3
+    return out[None]
+
+IMPLS["numpy_opt11"] = numpy_opt11
