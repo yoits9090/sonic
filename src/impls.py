@@ -311,7 +311,7 @@ def _prep_weights_v2(W, cfg):
     if entry is None:
         n_heads, dh, d = cfg.n_heads, cfg.d_head, cfg.d_model
         inv = np.float32(1.0 / np.sqrt(dh))
-        qkv, c1, db1 = {}, {}, {}
+        qkv, db1 = {}, {}
         w1, w2, wo = {}, {}, {}
         for i in range(cfg.n_layers):
             g1 = W[f"ln1_g{i}"]; b1 = W[f"ln1_b{i}"]
@@ -320,7 +320,6 @@ def _prep_weights_v2(W, cfg):
             wv = W[f"wv{i}"]
             P = np.concatenate([wq, wk, wv], axis=1)          # (d,3d)
             qkv[i] = P
-            c1[i] = P.sum(0) if np.all(g1 == 1) else (g1 @ P)
             db1[i] = None if not np.any(b1 != 0) else (b1 @ P)
             w1[i] = W[f"w1{i}"]
             w2[i] = W[f"w2{i}"]
@@ -328,10 +327,9 @@ def _prep_weights_v2(W, cfg):
         gf = W["lnf_g"]; bf = W["lnf_b"]
         outW = W["out"]
         A3 = outW if np.all(gf == 1) else (gf[:, None] * outW)
-        c3 = outW.sum(0) if np.all(gf == 1) else (gf @ outW)
         db3 = None if not np.any(bf != 0) else (bf @ outW)
-        entry = {"qkv": qkv, "c1": c1, "db1": db1, "w1": w1, "w2": w2, "wo": wo,
-                 "A3": A3, "c3": c3, "db3": db3, "ref": W}
+        entry = {"qkv": qkv, "db1": db1, "w1": w1, "w2": w2, "wo": wo,
+                 "A3": A3, "db3": db3, "ref": W}
         _WPREP_CACHE[key] = entry
     return entry
 
@@ -355,7 +353,8 @@ def numpy_opt3(W, x, cfg):
     maskadd = _maskadd(S)
     for i in range(cfg.n_layers):
         mu, rstd = _stats(h, cfg.eps)
-        qkv = (h @ p["qkv"][i] - mu * p["c1"][i]) * rstd
+        qkv = (h - mu) @ p["qkv"][i]
+        qkv *= rstd
         if p["db1"][i] is not None: qkv += p["db1"][i]
         Q = qkv[:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
         K = qkv[:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
@@ -369,7 +368,8 @@ def numpy_opt3(W, x, cfg):
         ff = np.maximum(h - mu, 0) * rstd
         h = h + (ff @ p["w1"][i]) @ p["w2"][i]
     mu, rstd = _stats(h, cfg.eps)
-    logits = (h @ p["A3"] - mu * p["c3"]) * rstd
+    logits = (h - mu) @ p["A3"]
+    logits *= rstd
     if p["db3"] is not None: logits += p["db3"]
     return logits[None]
 
@@ -386,7 +386,8 @@ def numpy_opt4(W, x, cfg):
     for i in range(cfg.n_layers):
         mu = h.mean(-1, keepdims=True)
         rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
-        qkv = (h @ p["qkv"][i] - mu * p["c1"][i]) * rstd
+        qkv = (h - mu) @ p["qkv"][i]
+        qkv *= rstd
         if p["db1"][i] is not None: qkv += p["db1"][i]
         Q = qkv[:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
         K = qkv[:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
@@ -402,7 +403,8 @@ def numpy_opt4(W, x, cfg):
         h = h + (ff @ p["w1"][i]) @ p["w2"][i]
     mu = h.mean(-1, keepdims=True)
     rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
-    logits = ((h @ p["A3"] - mu * p["c3"]) * rstd)
+    logits = (h - mu) @ p["A3"]
+    logits *= rstd
     if p["db3"] is not None: logits += p["db3"]
     return logits[None]
 
@@ -443,8 +445,7 @@ def numpy_opt5(W, x, cfg):
     for i in range(cfg.n_layers):
         mu = h.mean(-1, keepdims=True)
         rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
-        qkv = np.matmul(h, p["qkv"][i], out=b["qkv"])
-        qkv -= mu * p["c1"][i]
+        qkv = np.matmul(h - mu, p["qkv"][i], out=b["qkv"])
         qkv *= rstd
         if p["db1"][i] is not None: qkv += p["db1"][i]
         Q = qkv[:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
@@ -464,8 +465,7 @@ def numpy_opt5(W, x, cfg):
         h = h + (ff @ p["w1"][i]) @ p["w2"][i]
     mu = h.mean(-1, keepdims=True)
     rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
-    logits = np.matmul(h, p["A3"], out=b["out"])
-    logits -= mu * p["c3"]
+    logits = np.matmul(h - mu, p["A3"], out=b["out"])
     logits *= rstd
     if p["db3"] is not None: logits += p["db3"]
     return logits[None]

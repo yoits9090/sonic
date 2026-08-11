@@ -34,3 +34,16 @@ when they saturate, all numbers land in results/, graphs on localhost:9023.
 - Local pre-flight state: 6 numpy impls (naive, vec, opt1..opt4) all pass TINY+DEFAULT, all batches. C impls (c_v1..c_ground_up) pending .so builds on nodes.
 - Eval harness ready: v1 (run_all), v2 (scaling+tails), v3 (stability/cold/alloc); leaderboard+aggregate validated on synthetic data (10% discrepancy flag works).
 - Awaiting colab sessions (provisioner ~attempt 20, 0/3 ready).
+
+## 2026-08-11T03:30:39 — numpy-optimizer
+- Correctness bug found (with evals@bench-node-3): opt3/opt4 had ReLU AFTER up-projection
+  (max(h@w1,0)@w2 instead of max(ln(h),0)@w1@w2). Fixed: FFN fused form is
+  max(h-mu,0)*rstd @ w1 @ w2 (valid since rstd>0).
+- opt1..opt5 all pass correctness (max_abs_err <= 1.8e-6 vs f64 ref, both cfgs) and B>1
+  (fallback to numpy_vec). opt5 adds preallocated out= buffers.
+- Key tricks in opt3/opt4/opt5: LN folded into downstream projections
+  (ln(x)@P = rstd*(x@A - mu*c) + b@P with A=g*P, c=g@P precomputed), denom-factorized
+  attention ctx = (e@V)/sum(e) (row-wise denom factors out of the t-contraction),
+  mask as add (-1e9), no-max-subtraction softmax (safe: |att|<=~12 < 87 overflow bound),
+  Q pre-scaled by 1/sqrt(dh), B=1 squeeze to 2D matmuls.
+- Waiting on bench-node-1 (provisioner retrying, Colab API rejects session creation).
