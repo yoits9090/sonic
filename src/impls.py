@@ -227,7 +227,9 @@ def _ln(x, g, b, eps):
 def numpy_opt1(W, x, cfg):
     """B=1 squeeze, fused LN stats, mask-as-add, no-max-subtraction softmax,
     scale folded into Q, single QKV matmul. No weight caching."""
-    S = x.shape[1]
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
     d = cfg.d_model
     h = W["emb"][x[0]]                      # (S,d)
     n_heads, dh = cfg.n_heads, cfg.d_head
@@ -272,7 +274,9 @@ def _prep_weights(W, cfg):
 
 def numpy_opt2(W, x, cfg):
     """opt1 + cached fused QKV weights (Q pre-scaled); no per-call concatenate/scale."""
-    S = x.shape[1]
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
     d = cfg.d_model
     h = W["emb"][x[0]]
     n_heads, dh = cfg.n_heads, cfg.d_head
@@ -297,3 +301,106 @@ def numpy_opt2(W, x, cfg):
 
 IMPLS["numpy_opt1"] = numpy_opt1
 IMPLS["numpy_opt2"] = numpy_opt2
+
+def _prep_weights_v2(W, cfg):
+    """opt3 weight prep: fused QKV (Q pre-scaled) + LN-folded projection mats.
+    For LN with (g,b) -> ln(x)@P = rstd*(x@A - mu*c) + db
+    where A = g[:,None]*P, c = g@P, db = b@P.  (g=1,b=0 shortcuts precomputed.)"""
+    key = ("v2", id(W), cfg.d_model, cfg.n_heads, cfg.d_head, cfg.n_layers, cfg.d_ff, cfg.seq_len, cfg.vocab)
+    entry = _WPREP_CACHE.get(key)
+    if entry is None:
+        n_heads, dh, d = cfg.n_heads, cfg.d_head, cfg.d_model
+        inv = np.float32(1.0 / np.sqrt(dh))
+        qkv, c1, db1 = {}, {}, {}
+        w1, w2, wo = {}, {}, {}
+        for i in range(cfg.n_layers):
+            g1 = W[f"ln1_g{i}"]; b1 = W[f"ln1_b{i}"]
+            wq = W[f"wq{i}"] * inv
+            wk = W[f"wk{i}"]
+            wv = W[f"wv{i}"]
+            P = np.concatenate([wq, wk, wv], axis=1)          # (d,3d)
+            qkv[i] = P
+            c1[i] = P.sum(0) if np.all(g1 == 1) else (g1 @ P)
+            db1[i] = np.zeros(3 * d, dtype=np.float32) if not np.any(b1 != 0) else (b1 @ P)
+            w1[i] = W[f"w1{i}"]
+            w2[i] = W[f"w2{i}"]
+            wo[i] = W[f"wo{i}"]
+        gf = W["lnf_g"]; bf = W["lnf_b"]
+        outW = W["out"]
+        A3 = outW if np.all(gf == 1) else (gf[:, None] * outW)
+        c3 = outW.sum(0) if np.all(gf == 1) else (gf @ outW)
+        db3 = np.zeros(cfg.vocab, dtype=np.float32) if not np.any(bf != 0) else (bf @ outW)
+        entry = {"qkv": qkv, "c1": c1, "db1": db1, "w1": w1, "w2": w2, "wo": wo,
+                 "A3": A3, "c3": c3, "db3": db3, "ref": W}
+        _WPREP_CACHE[key] = entry
+    return entry
+
+def _stats(x, eps):
+    """per-row mean and rstd (E[x^2]-E[x]^2 path)."""
+    mu = x.mean(-1, keepdims=True)
+    var = (x * x).mean(-1, keepdims=True) - mu * mu
+    rstd = 1.0 / np.sqrt(var + eps)
+    return mu, rstd
+
+def numpy_opt3(W, x, cfg):
+    """opt2 + layernorm folded into downstream projections + denom-factorized ctx.
+    FFN keeps ReLU BEFORE the up-projection: h += max(h-mu,0)*rstd @ w1 @ w2."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    h = W["emb"][x[0]]
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    p = _prep_weights_v2(W, cfg)
+    maskadd = _maskadd(S)
+    for i in range(cfg.n_layers):
+        mu, rstd = _stats(h, cfg.eps)
+        qkv = (h @ p["qkv"][i] - mu * p["c1"][i]) * rstd
+        Q = qkv[:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        K = qkv[:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        V = qkv[:, 2*d:3*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        att = Q @ K.transpose(0, 2, 1)
+        att += maskadd
+        e = np.exp(att)
+        ctx = (e @ V) * (1.0 / e.sum(-1, keepdims=True))
+        h = h + ctx.transpose(1, 0, 2).reshape(S, d) @ p["wo"][i]
+        mu, rstd = _stats(h, cfg.eps)
+        ff = np.maximum(h - mu, 0) * rstd
+        h = h + (ff @ p["w1"][i]) @ p["w2"][i]
+    mu, rstd = _stats(h, cfg.eps)
+    logits = (h @ p["A3"] - mu * p["c3"]) * rstd
+    return logits[None]
+
+def numpy_opt4(W, x, cfg):
+    """opt3 with inlined stats (identical math)."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    h = W["emb"][x[0]]
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    p = _prep_weights_v2(W, cfg)
+    maskadd = _maskadd(S)
+    for i in range(cfg.n_layers):
+        mu = h.mean(-1, keepdims=True)
+        rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
+        qkv = (h @ p["qkv"][i] - mu * p["c1"][i]) * rstd
+        Q = qkv[:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        K = qkv[:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        V = qkv[:, 2*d:3*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        att = Q @ K.transpose(0, 2, 1)
+        att += maskadd
+        e = np.exp(att)
+        ctx = (e @ V) * (1.0 / e.sum(-1, keepdims=True))
+        h = h + ctx.transpose(1, 0, 2).reshape(S, d) @ p["wo"][i]
+        mu = h.mean(-1, keepdims=True)
+        rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
+        ff = np.maximum(h - mu, 0) * rstd
+        h = h + (ff @ p["w1"][i]) @ p["w2"][i]
+    mu = h.mean(-1, keepdims=True)
+    rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
+    logits = ((h @ p["A3"] - mu * p["c3"]) * rstd)[None]
+    return logits
+
+IMPLS["numpy_opt3"] = numpy_opt3
+IMPLS["numpy_opt4"] = numpy_opt4
