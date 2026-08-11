@@ -767,6 +767,56 @@
    "attempt": 1,
    "impl": null,
    "files": []
+  },
+  {
+   "ts": "2026-08-11T06:07:27-0400",
+   "node": "bench-node-3",
+   "gen": "v6",
+   "attempt": 2,
+   "impl": "numpy_naive,numpy_vec,numpy_opt1,numpy_opt2,numpy_opt3",
+   "files": [
+    "evals_v6_bench-node-3_numpy_naive-numpy_vec-numpy_opt1-numpy_opt2-numpy_opt3_a2.json"
+   ]
+  },
+  {
+   "ts": "2026-08-11T06:19:51-0400",
+   "node": "bench-node-3",
+   "gen": "v6",
+   "attempt": 3,
+   "impl": "numpy_opt4,numpy_opt5,numpy_opt6,numpy_opt7,numpy_opt8",
+   "files": [
+    "evals_v6_bench-node-3_numpy_opt4-numpy_opt5-numpy_opt6-numpy_opt7-numpy_opt8_a3.json"
+   ]
+  },
+  {
+   "ts": "2026-08-11T06:31:51-0400",
+   "node": "bench-node-3",
+   "gen": "v6",
+   "attempt": 4,
+   "impl": "numpy_opt9,numpy_opt10,numpy_opt11,numpy_opt12,numpy_opt13",
+   "files": [
+    "evals_v6_bench-node-3_numpy_opt9-numpy_opt10-numpy_opt11-numpy_opt12-numpy_opt13_a4.json"
+   ]
+  },
+  {
+   "ts": "2026-08-11T06:39:59-0400",
+   "node": "bench-node-3",
+   "gen": "v6",
+   "attempt": 5,
+   "impl": "c_v1,c_v2,c_v3",
+   "files": [
+    "evals_v6_bench-node-3_c_v1-c_v2-c_v3_a5.json"
+   ]
+  },
+  {
+   "ts": "2026-08-11T06:44:24-0400",
+   "node": "bench-node-3",
+   "gen": "v6",
+   "attempt": 6,
+   "impl": "c_v4,c_v5,c_v6,c_ground_up",
+   "files": [
+    "evals_v6_bench-node-3_c_v4-c_v5-c_v6-c_ground_up_a6.json"
+   ]
   }
  ]
 }

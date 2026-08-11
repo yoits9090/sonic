@@ -120,7 +120,7 @@ def main():
             except RuntimeError as e:
                 print(f"[driver] download warn: {e}")
     for gen in gens:
-        if gen not in ("v2", "v3", "v4", "v5"):
+        if gen not in ("v2", "v3", "v4", "v5", "v6"):
             continue
         sum_local = os.path.join(ROOT, "results", os.path.basename(SUMMARY_FILES[gen][0].format(node=node, attempt=attempt)))
         if os.path.exists(sum_local):
