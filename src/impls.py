@@ -433,7 +433,13 @@ def _bufs(cfg):
             "out": np.empty((S, cfg.vocab), np.float32),
             "hc": np.empty((S, 2 * d), np.float32),
             "hc3": np.empty((S, 2 * d + 1), np.float32),
+            "h0": np.empty((S, d), np.float32),
+            "ones": np.empty((S, 1), np.float32),
+            "st": np.empty((S, 2), np.float32),
+            "rstd": np.empty((S, 1), np.float32),
+            "mm": np.empty((S, 1), np.float32),
         }
+        b["ones"][:] = 1.0
         _BUFS_CACHE[key] = b
     return b
 
@@ -890,3 +896,77 @@ def numpy_opt11(W, x, cfg):
     return out[None]
 
 IMPLS["numpy_opt11"] = numpy_opt11
+
+def numpy_opt12(W, x, cfg):
+    """opt11 + zero per-call allocations: take/ones/st/rstd temps all in cached buffers."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    emb = W["emb"]
+    p = _prep_weights_v2(W, cfg)
+    maskadd = _maskadd(S)
+    b = _bufs(cfg)
+    Wstats = _stats_w3(d, cfg.eps)
+    h = b["h0"]
+    np.take(emb, x[0], axis=0, out=h)
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    hc = b["hc3"]
+    ones = b["ones"] if b["ones"].shape == (S, 1) else np.ones((S, 1), np.float32)
+    st = b["st"]
+    rstd = b["rstd"]
+    mm = b["mm"]
+    qkvW = p["qkv"]; db1 = p["db1"]; w1 = p["w1"]; w2 = p["w2"]; wo = p["wo"]
+    A3 = p["A3"]; db3 = p["db3"]
+    ff = b["ff"]; qkv = b["qkv"]; att = b["att"]; e = b["e"]; den = b["den"]
+    ctx = b["ctx"]; proj = b["proj"]; up = b["up"]; out = b["out"]
+    for i in range(cfg.n_layers):
+        np.multiply(h, h, out=ff)
+        np.concatenate([h, ff, ones], axis=-1, out=hc)
+        np.matmul(hc, Wstats, out=st)
+        mu = st[:, :1]
+        np.multiply(mu, mu, out=mm)
+        np.subtract(st[:, 1:], mm, out=rstd)
+        np.power(rstd, -0.5, out=rstd)
+        np.subtract(h, mu, out=ff)
+        np.matmul(ff, qkvW[i], out=qkv)
+        qkv *= rstd
+        if db1[i] is not None: qkv += db1[i]
+        Q = qkv[:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        K = qkv[:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        V = qkv[:, 2*d:3*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        np.matmul(Q, K.transpose(0, 2, 1), out=att)
+        att += maskadd
+        np.exp(att, out=e)
+        np.matmul(e, ones, out=den)
+        np.matmul(e, V, out=ctx)
+        ctx /= den
+        np.matmul(ctx.transpose(1, 0, 2).reshape(S, d), wo[i], out=proj)
+        np.add(h, proj, out=h)
+        np.multiply(h, h, out=ff)
+        np.concatenate([h, ff, ones], axis=-1, out=hc)
+        np.matmul(hc, Wstats, out=st)
+        mu = st[:, :1]
+        np.multiply(mu, mu, out=mm)
+        np.subtract(st[:, 1:], mm, out=rstd)
+        np.power(rstd, -0.5, out=rstd)
+        np.subtract(h, mu, out=ff)
+        np.maximum(ff, 0, out=ff)
+        ff *= rstd
+        np.matmul(ff, w1[i], out=up)
+        np.matmul(up, w2[i], out=ff)
+        np.add(h, ff, out=h)
+    np.multiply(h, h, out=ff)
+    np.concatenate([h, ff, ones], axis=-1, out=hc)
+    np.matmul(hc, Wstats, out=st)
+    mu = st[:, :1]
+    np.multiply(mu, mu, out=mm)
+    np.subtract(st[:, 1:], mm, out=rstd)
+    np.power(rstd, -0.5, out=rstd)
+    np.subtract(h, mu, out=ff)
+    np.matmul(ff, A3, out=out)
+    out *= rstd
+    if db3 is not None: out += db3
+    return out[None]
+
+IMPLS["numpy_opt12"] = numpy_opt12
