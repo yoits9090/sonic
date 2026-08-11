@@ -6,12 +6,10 @@ Prints one line per (impl,cfg): "CORR {json}" then "LAT {json}".
 import os, sys, json, time
 _HERE = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, _HERE)
-_d = _HERE
-for _ in range(4):  # walk up to find repo root (dir containing src/impls.py)
+for _d in ("/content", _HERE):  # node layout: src/ uploaded under /content
     if os.path.isfile(os.path.join(_d, "src", "impls.py")):
         sys.path.insert(0, _d)
         break
-    _d = os.path.dirname(_d)
 import numpy as np
 from src.config import DEFAULT, TINY
 from src.random_state import RNG, make_input

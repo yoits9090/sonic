@@ -30,18 +30,17 @@ def main():
     a = ap.parse_args()
 
     node = a.node
-    # 1) sync
-    print(f"[sync] uploading to {node}...")
+    # 1) ensure dirs + sync src files (exec -f takes LOCAL paths and uploads itself)
+    print(f"[sync] uploading src/ to {node}...")
+    sh(f"colab --auth adc exec -s {node} -f colab/bench/mkdirs.py --timeout 120")
     sh(f"colab --auth adc upload -s {node} src/__init__.py /content/src/__init__.py")
     sh(f"colab --auth adc upload -s {node} src/config.py /content/src/config.py")
     sh(f"colab --auth adc upload -s {node} src/random_state.py /content/src/random_state.py")
     sh(f"colab --auth adc upload -s {node} src/impls.py /content/src/impls.py")
-    sh(f"colab --auth adc upload -s {node} colab/bench/run_bench.py /content/bench/run_bench.py")
-    sh(f"colab --auth adc upload -s {node} colab/bench/probe.py /content/bench/probe.py")
 
     if a.probe:
         print("[probe] running probe.py...")
-        out = sh(f"colab --auth adc exec -s {node} -f /content/bench/probe.py --timeout 300")
+        out = sh(f"colab --auth adc exec -s {node} -f colab/bench/probe.py --timeout 300")
         print(out)
         fn = f"results/{node}_probe.json"
         os.makedirs("results", exist_ok=True)
@@ -54,7 +53,7 @@ def main():
 
     # 2) exec battery
     envs = " ".join(f"--env {e}" for e in a.env)
-    cmd = (f"colab --auth adc exec -s {node} -f /content/bench/run_bench.py --timeout {a.timeout} "
+    cmd = (f"colab --auth adc exec -s {node} -f colab/bench/run_bench.py --timeout {a.timeout} "
            f"--env IMPLS={a.impls} --env CFGS={a.cfgs} --env ITERS={a.iters} "
            f"--env WARMUP={a.warmup} --env NODE={node} {envs}")
     print("[exec]", cmd)
