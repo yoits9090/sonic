@@ -63,6 +63,15 @@ for cfg in ("tiny", "default"):
         summary[f"lat numpy_vec {cfg}"] = (j["median_us"], j["sub_ms"])
         print(f"[lat] numpy_vec {cfg}: median={j['median_us']:.1f}us", flush=True)
 
+
+# 5. escalation: eval_v3 (5-seed correctness, latency stability, cold call, alloc counts)
+import shutil
+for impl in ["c_v3", "c_v5", "c_ground_up", "numpy_vec"]:
+    r = run_eval("evals/eval_v3.py",
+                 ["--node", NODE, "--impl", impl, "--attempt", ATTEMPT])
+    tail = [l for l in r.stdout.strip().splitlines() if l.startswith("[v3")][-1] if r.stdout.strip() else "NO OUTPUT"
+    print(f"[v3] {impl}: rc={r.returncode} {tail}", flush=True)
+
 json.dump({"node": NODE, "attempt": ATTEMPT, "elapsed_s": round(time.time() - t0, 1),
            "summary": summary},
           open(f"results/{NODE}_summary_{ATTEMPT}.json", "w"), indent=1)

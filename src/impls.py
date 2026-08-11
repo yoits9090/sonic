@@ -136,6 +136,9 @@ class _CImpl:
             [np.concatenate([W[f"wq{i}"], W[f"wk{i}"], W[f"wv{i}"]], axis=1)
              for i in range(L)], axis=0).astype(np.float32, copy=False)
         wo = cat([f"wo{i}" for i in range(L)])
+        wq = cat([f"wq{i}" for i in range(L)])
+        wk = cat([f"wk{i}" for i in range(L)])
+        wv = cat([f"wv{i}" for i in range(L)])
         w1 = cat([f"w1{i}" for i in range(L)])
         w2 = cat([f"w2{i}" for i in range(L)])
         ln1g = cat([f"ln1_g{i}" for i in range(L)])
@@ -145,14 +148,14 @@ class _CImpl:
         lnfg = np.ascontiguousarray(W["lnf_g"], dtype=np.float32)
         lnfb = np.ascontiguousarray(W["lnf_b"], dtype=np.float32)
         outw = np.ascontiguousarray(W["out"], dtype=np.float32)
-        self._keep = (emb, wqkv, wo, w1, w2, ln1g, ln1b, ln2g, ln2b, lnfg, lnfb, outw)
+        self._keep = (emb, wqkv, wo, wq, wk, wv, w1, w2, ln1g, ln1b, ln2g, ln2b, lnfg, lnfb, outw)
 
         st = _FTWeights()
         st.emb = emb.ctypes.data
         st.wqkv = wqkv.ctypes.data
-        st.wq = wo.ctypes.data          # unused by fused path; keep non-null
-        st.wk = wo.ctypes.data
-        st.wv = wo.ctypes.data
+        st.wq = wq.ctypes.data          # used by the unfused (v1/v2) path
+        st.wk = wk.ctypes.data
+        st.wv = wv.ctypes.data
         st.wo = wo.ctypes.data
         st.w1 = w1.ctypes.data
         st.w2 = w2.ctypes.data

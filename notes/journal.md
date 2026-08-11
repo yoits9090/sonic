@@ -47,3 +47,14 @@ when they saturate, all numbers land in results/, graphs on localhost:9023.
   mask as add (-1e9), no-max-subtraction softmax (safe: |att|<=~12 < 87 overflow bound),
   Q pre-scaled by 1/sqrt(dh), B=1 squeeze to 2D matmuls.
 - Waiting on bench-node-1 (provisioner retrying, Colab API rejects session creation).
+
+## research (agent: researcher, 2026-08-11)
+- completed web research sprint: BLAS microkernels, llama.cpp kernel tricks, threading for 2 vCPUs, int8/VNNI, fused attention, XLA/oneDNN. Full findings in notes/research.md.
+- key insight: TINY forward is 0.57 MFLOP with only 96.8 KB of weights (L2-resident) -> the 1ms budget is an OVERHEAD problem, not a FLOPs problem. numpy+OpenBLAS pays 30-150us dispatch + threading pathology (OpenBLAS #731) on tiny GEMMs.
+- TOP-5 for the tree: (1) fused single-pass C/numba kernel, (2) numpy fast-path (threads=1 + weight folds + direct sgemm), (3) 2-thread row-sliced head GEMV only if 2 physical cores, (4) int16/int8 static weights with tolerance check (int8 likely violates 1e-3 on logits), (5) fused causal attention + fast exp/rsqrt.
+- first numbers to beat: compute floor 35-140us at 4-16 GFLOP/s; output head = 46% of MACs (131K of 283K).
+- sources: salykova.github.io/matmul-cpu, llama.cpp ggml (simd-gemm.h, vec.cpp, x86/quants.c), Intel oneMKL JIT small-matrix article, OpenBLAS #731, victorbona CPU-LLM compendium, arXiv 2406.02528 / 2409.16997 / 2509.25853, CMSIS-NN, XNNPACK, oneDNN BRGeMM.
+
+- fix (pre-node): mm_blocked restructured for perfect nesting (collapse(2) validity); wrapper now
+  builds separate wq/wk/wv blocks for the unfused v1/v2 path (was pointing at wo -> wrong weights).
+  Local clang syntax checks pass for all 5 build configs. Waiting on provisioner for bench-node-2.

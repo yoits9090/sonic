@@ -53,11 +53,9 @@ static void mm_blocked(const float *restrict A, const float *restrict B,
 #pragma omp parallel for schedule(static) collapse(2)
 #endif
     for (int i0 = 0; i0 < M; i0 += TI) {
-        int imax = i0 + TI < M ? i0 + TI : M;
-        int ni = imax - i0;
         for (int j0 = 0; j0 < N; j0 += 8) {
-            int jmax = j0 + 8 < N ? j0 + 8 : N;
-            int nj = jmax - j0;
+            int ni = (i0 + TI < M ? TI : M - i0);
+            int nj = (j0 + 8 < N ? 8 : N - j0);
             float accv[8][8];
             for (int ii = 0; ii < ni; ii++)
                 for (int jj = 0; jj < nj; jj++)
