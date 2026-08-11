@@ -59,6 +59,14 @@ Both configs are **sub-millisecond**: TINY is ~28x under 1000 us, DEFAULT ~2.9x 
 - `dash/server.py` — localhost:9023 dashboard
 - `colab/` — Colab CLI helpers (probe, session provisioning, bench drivers)
 
+
+## v6 escalation (op-domain battery) — current frontier
+
+18 cells: cfg{tiny,default} x batch{1,4,16} x seq{16,32,64}, sub-ms criterion. **No impl
+passes all cells.** Champion **c_v6 = 11/18**: sub-ms on ALL B=1 cells (tiny 63-184 us,
+default 196-842 us) + B=4 tiny. B>1 gap: default B=4 S=32 is 1482 us (~2x from sub-ms);
+B=16 always >2.7 ms. Roofline: node peak GEMM 57.4 GF/s; c_v6 efficiency 0.31, numpy
+best 0.21. Cold-start: c_v6 first call 1001 us vs 371 us steady (ctypes prep dominates).
 ## Replay
 
 ```
