@@ -1,0 +1,25 @@
+{
+ "impl": "c_v2",
+ "cfg": {
+  "d_model": 32,
+  "n_heads": 2,
+  "d_head": 16,
+  "n_layers": 1,
+  "d_ff": 64,
+  "seq_len": 16,
+  "vocab": 256,
+  "eps": 1e-05
+ },
+ "node": "bench-node-2",
+ "iters": 3000,
+ "numpy_version": "2.0.2",
+ "median_us": 203.74200000000002,
+ "mean_us": 209.96272666666664,
+ "p50_us": 203.74200000000002,
+ "p90_us": 227.832,
+ "p99_us": 278.35709999999983,
+ "min_us": 120.624,
+ "max_us": 1805.487,
+ "throughput_tok_s": 78530.69077558872,
+ "sub_ms": true
+}

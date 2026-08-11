@@ -5,7 +5,7 @@ Writes results/manifest.json attempt log. All compute happens on the node.
 import argparse, json, os, subprocess, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-REMOTE_BASE = "/content/ft_evals3"
+REMOTE_BASE = "/content/ft_evals3"   # per-attempt subdir added at runtime: {REMOTE_BASE}/a{attempt}
 
 UPLOAD_FILES = [
     "src/config.py", "src/random_state.py", "src/impls.py",
@@ -55,6 +55,7 @@ def main():
     node = a.node
     gens = ALL_SEQ if a.gen == "all" else [a.gen]
     attempt = a.attempt if a.attempt else max(next_attempt(node, g) for g in gens)
+    rb = f"{REMOTE_BASE}/a{attempt}"  # snapshot-isolated run dir (avoids stale kernel module cache)
     runs = []
     for g in gens:
         script, tmpl_args = RUNNERS[g]
@@ -64,18 +65,23 @@ def main():
         runs.append((script, args))
 
     # 0. ensure remote dirs
-    mk = f"import os\nfor d in ['src','evals','results']: os.makedirs('{REMOTE_BASE}/'+d, exist_ok=True)\nprint('dirs ok')\n"
+    mk = (f"import os\nfor d in ['src','evals','results']: os.makedirs('{rb}/'+d, exist_ok=True)\n"
+          f"print('dirs ok')\n")
     sh(["colab", "--auth", "adc", "exec", "-s", node, "--timeout", "60"], input=mk, timeout=180)
-    # 1. upload
+    # 1. upload (snapshot: unique per attempt so concurrent edits / kernel caches can't leak)
     for f in UPLOAD_FILES:
-        remote = f"{REMOTE_BASE}/{os.path.dirname(f)}/{os.path.basename(f)}"
+        remote = f"{rb}/{os.path.dirname(f)}/{os.path.basename(f)}"
         print(f"[driver] upload {f} -> {remote}")
         sh(["colab", "--auth", "adc", "upload", "-s", node, os.path.join(ROOT, f), remote], timeout=180)
     # 2. exec via stdin runpy (keeps __file__ based paths correct on the node)
-    lines = ["import runpy, sys", f"sys.path.insert(0, '{REMOTE_BASE}')"]
+    lines = ["import runpy, sys",
+             "for _m in list(sys.modules):",
+             "    if _m == 'src' or _m.startswith('src.'): del sys.modules[_m]",
+             f"sys.path = [p for p in sys.path if 'ft_evals3' not in p]",
+             f"sys.path.insert(0, '{rb}')"]
     for script, args in runs:
         lines.append(f"sys.argv = ['{script}'] + {args!r}")
-        lines.append(f"runpy.run_path('{REMOTE_BASE}/{script}', run_name='__main__')")
+        lines.append(f"runpy.run_path('{rb}/{script}', run_name='__main__')")
     lines.append("None")  # avoid IPython echoing runpy's returned globals dict
     runner = "\n".join(lines) + "\n"
     print(f"[driver] exec {gens} timeout={a.timeout}")
@@ -93,7 +99,7 @@ def main():
             fname = pat.format(node=node, attempt=attempt, impl=a.impl or "*")
             if "*" in fname:
                 continue  # per-impl files handled below
-            remote = f"{REMOTE_BASE}/{fname}"
+            remote = f"{rb}/{fname}"
             local = os.path.join(ROOT, "results", os.path.basename(fname))
             try:
                 sh(["colab", "--auth", "adc", "download", "-s", node, remote, local], timeout=180)
@@ -109,7 +115,7 @@ def main():
                 data = json.load(open(sum_local))
                 for impl in data.get("impls", {}):
                     fname = SUMMARY_FILES[gen][1].format(node=node, attempt=attempt, impl=impl)
-                    remote = f"{REMOTE_BASE}/{fname}"
+                    remote = f"{rb}/{fname}"
                     local = os.path.join(ROOT, "results", os.path.basename(fname))
                     try:
                         sh(["colab", "--auth", "adc", "download", "-s", node, remote, local], timeout=180)

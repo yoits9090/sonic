@@ -40,6 +40,11 @@ def extract_records(path, d):
             key = cfg_key(cfg)
             yield impl, key, lat["median_us"], lat.get("node", "?"), ts
         return
+    # flat sibling format: {impl, cfg: "tiny"|"default", median_us, node, ...}
+    if isinstance(d, dict) and "median_us" in d and "impl" in d and isinstance(d.get("cfg"), str):
+        key = cfg_key({"v3_name": d["cfg"]})
+        yield d["impl"], key, d["median_us"], d.get("node", "?"), ts
+        return
     # v2/v3: {impls: {impl: {... seq_sweep/batch_sweep or configs}}}
     if isinstance(d, dict) and "impls" in d:
         node = d.get("node", "?")

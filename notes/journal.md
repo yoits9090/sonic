@@ -166,3 +166,11 @@ TINY: final_chain 46us, ffn 35us, qkv 20us, attn 20us, wo 7us, stats 14us, emb 3
 DEFAULT: final_chain 141us, ffn 69us, qkv 43us, attn 39us, wo 16us, stats 18us, emb 2us (sum ~328
 in isolation; full forward ~714 -> remainder is call overhead + noise). ~40 numpy calls/call at
 3-6us each: the floor is Python->C dispatch + small-gemm BLAS time on a 2-core Xeon.
+
+## 2026-08-11 — FIRST FULL BATTERY on bench-node-3 (agent: evals)
+- Full battery v1+v2+v3+v4+v5 ran on bench-node-3 (Xeon 2.2GHz 2-core, numpy 2.0.2), 15 impls (naive, vec, opt1..opt13), attempt 4, snapshot-isolated per-attempt upload (fixed stale kernel module cache across execs).
+- Correctness: ALL GREEN — v1 (TINY), v2 (seq 8..128 x batch 1/4/16 grid), v3 (5 weight/input seeds), v4 (edge seq 1/2/16/32/64/256, skewed/same/edges/bursty token dists). No failures anywhere.
+- Leaderboard (best median): TINY numpy_opt12=131.2us (opt11 137.0, opt7 143.6, opt10 140.2, opt8 140.7). DEFAULT numpy_opt12=704.6us (opt11 716.0, opt10 716.9, opt8 731.8, opt7 758.9). All < 1ms target.
+- Cross-node (aggregate.json): node-1 vs node-3 agree within ~1-5% for same impls (opt12: 131.17 vs 132.47; opt3: 210.9 vs 209.1; opt8: 140.7 vs 146.7). NO >10% discrepancies remain. Earlier FLAGs (opt8/opt12) were impl-version skew (node-1 a1 files measured older code), resolved after re-measure.
+- v5 headroom: opt12 DEFAULT 6.93 GF/s vs ~17 GF/s pure-matmul ceiling (~2.4x overhead); opt7 8.9 GF/s @1.9x overhead — matmul ceiling is the machine limit for these shapes.
+- Fixes in this round: run_all.py JSON parse (multi-line indent bug), eval_latency compact print, node_driver positional upload/download args, remote-dir pre-create, snapshot isolation, IPython echo suppression, leaderboard flat-format + v3 cfg-key support.

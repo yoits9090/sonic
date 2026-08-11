@@ -1,0 +1,77 @@
+{
+ "node": "bench-node-2",
+ "attempt": "04",
+ "elapsed_s": 85.6,
+ "summary": {
+  "corr c_v1 tiny": "c_v1: max_abs_err=9.405e-07 max_rel_err=2.418e-07 pass=True",
+  "corr c_v2 tiny": "c_v2: max_abs_err=1.158e-06 max_rel_err=2.979e-07 pass=True",
+  "corr c_v3 tiny": "c_v3: max_abs_err=1.520e-06 max_rel_err=3.909e-07 pass=True",
+  "corr c_v4 tiny": "c_v4: max_abs_err=1.520e-06 max_rel_err=3.909e-07 pass=True",
+  "corr c_v5 tiny": "c_v5: max_abs_err=1.520e-06 max_rel_err=3.909e-07 pass=True",
+  "corr c_ground_up tiny": "c_ground_up: max_abs_err=1.520e-06 max_rel_err=3.909e-07 pass=True",
+  "corr numpy_vec tiny": "numpy_vec: max_abs_err=7.485e-07 max_rel_err=1.925e-07 pass=True",
+  "corr c_v1 default": "c_v1: max_abs_err=1.168e-06 max_rel_err=3.216e-07 pass=True",
+  "corr c_v2 default": "c_v2: max_abs_err=1.822e-06 max_rel_err=5.014e-07 pass=True",
+  "corr c_v3 default": "c_v3: max_abs_err=1.881e-06 max_rel_err=5.179e-07 pass=True",
+  "corr c_v4 default": "c_v4: max_abs_err=1.881e-06 max_rel_err=5.179e-07 pass=True",
+  "corr c_v5 default": "c_v5: max_abs_err=1.881e-06 max_rel_err=5.179e-07 pass=True",
+  "corr c_ground_up default": "c_ground_up: max_abs_err=1.881e-06 max_rel_err=5.179e-07 pass=True",
+  "corr numpy_vec default": "numpy_vec: max_abs_err=1.021e-06 max_rel_err=2.812e-07 pass=True",
+  "lat c_v1 tiny": [
+   240.8275,
+   true
+  ],
+  "lat c_v2 tiny": [
+   203.74200000000002,
+   true
+  ],
+  "lat c_v3 tiny": [
+   166.5525,
+   true
+  ],
+  "lat c_v4 tiny": [
+   85.41900000000001,
+   true
+  ],
+  "lat c_v5 tiny": [
+   99.7285,
+   true
+  ],
+  "lat c_ground_up tiny": [
+   100.013,
+   true
+  ],
+  "lat c_v1 default": [
+   2310.7595,
+   false
+  ],
+  "lat c_v2 default": [
+   1438.7045,
+   false
+  ],
+  "lat c_v3 default": [
+   1024.7915,
+   false
+  ],
+  "lat c_v4 default": [
+   961.0195,
+   true
+  ],
+  "lat c_v5 default": [
+   1498.513,
+   false
+  ],
+  "lat c_ground_up default": [
+   1022.7629999999999,
+   false
+  ],
+  "lat numpy_vec tiny": [
+   434.3755,
+   true
+  ],
+  "lat numpy_vec default": [
+   2197.0095,
+   false
+  ]
+ }
+}

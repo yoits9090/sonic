@@ -1,0 +1,117 @@
+{
+ "impl": "numpy_opt12",
+ "node": "bench-node-3",
+ "generation": "v3",
+ "attempt": 4,
+ "numpy_version": "2.0.2",
+ "n_seeds": 5,
+ "criteria": {
+  "abs_tol": 0.001
+ },
+ "configs": {
+  "tiny": {
+   "correctness_seeds": [
+    {
+     "seed": 0,
+     "max_abs_err": 1.19406427323554e-06,
+     "pass": true
+    },
+    {
+     "seed": 1,
+     "max_abs_err": 1.6125919879428352e-06,
+     "pass": true
+    },
+    {
+     "seed": 2,
+     "max_abs_err": 1.1779453692462027e-06,
+     "pass": true
+    },
+    {
+     "seed": 3,
+     "max_abs_err": 1.6798632177517092e-06,
+     "pass": true
+    },
+    {
+     "seed": 4,
+     "max_abs_err": 1.2971205599621172e-06,
+     "pass": true
+    }
+   ],
+   "latency_seeds": {
+    "seed_medians_us": [
+     208.3305,
+     133.9415,
+     133.99200000000002,
+     138.73649999999998,
+     133.8225
+    ],
+    "median_of_medians_us": 133.99200000000002,
+    "min_median_us": 133.8225,
+    "max_median_us": 208.3305,
+    "spread_pct": 55.676735974892125
+   },
+   "cold": {
+    "cold_first_call_us": 390.811,
+    "steady_median_us": 134.752,
+    "cold_ratio": 2.9002241154120156
+   },
+   "alloc": {
+    "current_bytes": 1197,
+    "peak_bytes": 18925,
+    "num_allocations": 20
+   }
+  },
+  "default": {
+   "correctness_seeds": [
+    {
+     "seed": 0,
+     "max_abs_err": 1.793318623932727e-06,
+     "pass": true
+    },
+    {
+     "seed": 1,
+     "max_abs_err": 2.1386108203236276e-06,
+     "pass": true
+    },
+    {
+     "seed": 2,
+     "max_abs_err": 2.0648929739408572e-06,
+     "pass": true
+    },
+    {
+     "seed": 3,
+     "max_abs_err": 1.9880814200456953e-06,
+     "pass": true
+    },
+    {
+     "seed": 4,
+     "max_abs_err": 2.057597448645865e-06,
+     "pass": true
+    }
+   ],
+   "latency_seeds": {
+    "seed_medians_us": [
+     706.6569999999999,
+     701.8385000000001,
+     701.4784999999999,
+     711.7085,
+     704.61
+    ],
+    "median_of_medians_us": 704.61,
+    "min_median_us": 701.4784999999999,
+    "max_median_us": 711.7085,
+    "spread_pct": 1.4583483314171453
+   },
+   "cold": {
+    "cold_first_call_us": 1022.954,
+    "steady_median_us": 705.6425,
+    "cold_ratio": 1.4496774216405615
+   },
+   "alloc": {
+    "current_bytes": 1309,
+    "peak_bytes": 35421,
+    "num_allocations": 22
+   }
+  }
+ }
+}
