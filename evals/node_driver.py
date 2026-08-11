@@ -30,8 +30,8 @@ SUMMARY_FILES = {
 }
 
 
-def sh(args, timeout=300):
-    r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+def sh(args, timeout=300, input=None):
+    r = subprocess.run(args, capture_output=True, text=True, timeout=timeout, input=input)
     if r.returncode != 0:
         raise RuntimeError(f"cmd failed ({r.returncode}): {' '.join(args)}\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}")
     return r.stdout
@@ -63,11 +63,14 @@ def main():
             args += ["--impl", a.impl]
         runs.append((script, args))
 
+    # 0. ensure remote dirs
+    mk = f"import os\nfor d in ['src','evals','results']: os.makedirs('{REMOTE_BASE}/'+d, exist_ok=True)\nprint('dirs ok')\n"
+    sh(["colab", "--auth", "adc", "exec", "-s", node, "--timeout", "60"], input=mk, timeout=180)
     # 1. upload
     for f in UPLOAD_FILES:
         remote = f"{REMOTE_BASE}/{os.path.dirname(f)}/{os.path.basename(f)}"
         print(f"[driver] upload {f} -> {remote}")
-        sh(["colab", "--auth", "adc", "upload", "-s", node, "-f", os.path.join(ROOT, f), remote], timeout=180)
+        sh(["colab", "--auth", "adc", "upload", "-s", node, os.path.join(ROOT, f), remote], timeout=180)
     # 2. exec via stdin runpy (keeps __file__ based paths correct on the node)
     lines = ["import runpy, sys", f"sys.path.insert(0, '{REMOTE_BASE}')"]
     for script, args in runs:
@@ -92,7 +95,7 @@ def main():
             remote = f"{REMOTE_BASE}/{fname}"
             local = os.path.join(ROOT, "results", os.path.basename(fname))
             try:
-                sh(["colab", "--auth", "adc", "download", "-s", node, "-f", remote, local], timeout=180)
+                sh(["colab", "--auth", "adc", "download", "-s", node, remote, local], timeout=180)
                 downloaded.append(os.path.basename(fname))
             except RuntimeError as e:
                 print(f"[driver] download warn: {e}")
@@ -108,7 +111,7 @@ def main():
                     remote = f"{REMOTE_BASE}/{fname}"
                     local = os.path.join(ROOT, "results", os.path.basename(fname))
                     try:
-                        sh(["colab", "--auth", "adc", "download", "-s", node, "-f", remote, local], timeout=180)
+                        sh(["colab", "--auth", "adc", "download", "-s", node, remote, local], timeout=180)
                         downloaded.append(os.path.basename(fname))
                     except RuntimeError as e:
                         print(f"[driver] download warn: {e}")

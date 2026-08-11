@@ -72,3 +72,21 @@ when they saturate, all numbers land in results/, graphs on localhost:9023.
   (numpy_vec=1992). All C variants sub-ms on TINY.
 - eval_v3 numpy_vec baseline: tiny steady 429.8us / default 1999.9us, allocs 19-20, peak 0.12-0.53MB.
 - Node died after run (~30 min lifetime); results JSONs lost with VM. Re-running on next node.
+
+## 2026-08-11T04:05:23 — numpy-optimizer: FIRST NUMBERS (bench-node-1, Xeon 2.2GHz 2c, numpy 2.0.2)
+Battery a1 (iters=3000, warmup=300, all pass correctness):
+| impl | tiny median_us | default median_us |
+|---|---|---|
+| numpy_naive | 418.2 | 2172.5 |
+| numpy_vec | 422.8 | 1983.4 |
+| numpy_opt1 | 278.6 | 1707.6 |
+| numpy_opt2 | 227.5 | 929.6 |
+| numpy_opt3 | 247.3 | 1024.9 |
+| numpy_opt4 | 230.7 | 942.7 |
+| numpy_opt5 | 214.1 | 920.3 |
+| numpy_opt6 | 224.9 | 912.2 |
+| numpy_opt7 | 145.9 | 761.6 |
+TARGETS HIT: tiny <1000us (5.9x margin), default <1000us (1.3x margin). opt7 = opt6 + stacked-matmul
+LN stats ([h|h*h] @ Wstats -> (S,2)): biggest single win (~35% on tiny vs opt6).
+Node is noisy (mean >> median; opt6 default p99=9ms) -> medians are the metric.
+Next: thread sweep (2 cores), probe stage timings, opt8+ (attention/softmax micro-opts), attempt-2 stability run.

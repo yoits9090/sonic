@@ -3,7 +3,10 @@ Prints JSON: cpu info, numpy/BLAS info, matmul micro-bench, per-stage us for
 the opt2 pipeline, and thread-count experiments for a 512x512 gemm.
 """
 import os, sys, json, time, platform
-_HERE = os.path.dirname(os.path.realpath(__file__))
+try:
+    _HERE = os.path.dirname(os.path.realpath(__file__))
+except NameError:  # executed via colab exec (notebook semantics, no __file__)
+    _HERE = os.getcwd()
 sys.path.insert(0, _HERE)
 for _d in ("/content", _HERE):
     if os.path.isfile(os.path.join(_d, "src", "impls.py")):

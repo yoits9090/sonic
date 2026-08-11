@@ -1,0 +1,204 @@
+03:15:21 fail bench-node-1: [4m612a229[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:15:22 fail bench-node-2: [4mc696128[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:15:24 fail bench-node-3: [4m28c104c[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:15:24 attempt 1 -> 0/3 ready; sleeping 45s
+03:16:10 fail bench-node-1: [4m27e26ec[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:16:12 fail bench-node-2: [4m0b59df9[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:16:13 fail bench-node-3: [4m81c30d0[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:16:13 attempt 2 -> 0/3 ready; sleeping 45s
+03:16:59 fail bench-node-1: [4m442d768[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:17:00 fail bench-node-2: [4m5c6f809[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:17:02 fail bench-node-3: [4m02fc660[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:17:02 attempt 3 -> 0/3 ready; sleeping 45s
+03:17:48 fail bench-node-1: [4m87ae3d4[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:17:49 fail bench-node-2: [4mea6818a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:17:50 fail bench-node-3: [4m96225ab[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:17:50 attempt 4 -> 0/3 ready; sleeping 45s
+03:18:36 fail bench-node-1: [4m327399a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:18:37 fail bench-node-2: [4m96174be[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:18:38 fail bench-node-3: [4m73bb188[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:18:38 attempt 5 -> 0/3 ready; sleeping 45s
+03:19:25 fail bench-node-1: [4ma9085a2[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:19:26 fail bench-node-2: [4mf38e6f0[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:19:27 fail bench-node-3: [4m2170f3d[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:19:27 attempt 6 -> 0/3 ready; sleeping 45s
+03:20:13 fail bench-node-1: [4mc5c62ca[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:20:15 fail bench-node-2: [4m4e0ca05[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:20:16 fail bench-node-3: [4m287f933[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:20:16 attempt 7 -> 0/3 ready; sleeping 45s
+03:21:02 fail bench-node-1: [4m523825a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:21:03 fail bench-node-2: [4mcc28fc4[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:21:04 fail bench-node-3: [4m5b7135a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:21:04 attempt 8 -> 0/3 ready; sleeping 45s
+03:21:50 fail bench-node-1: [4md4d8636[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:21:51 fail bench-node-2: [4m071438c[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:21:53 fail bench-node-3: [4mb20a034[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:21:53 attempt 9 -> 0/3 ready; sleeping 45s
+03:22:39 fail bench-node-1: [4m1cf9646[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:22:40 fail bench-node-2: [4m9b8da0c[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:22:41 fail bench-node-3: [4m8b6ad7c[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:22:41 attempt 10 -> 0/3 ready; sleeping 45s
+03:23:27 fail bench-node-1: [4medd9dd1[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:23:28 fail bench-node-2: [4mda2dc61[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:23:30 fail bench-node-3: [4md5897de[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:23:30 attempt 11 -> 0/3 ready; sleeping 45s
+03:24:16 fail bench-node-1: [4meadf287[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:24:17 fail bench-node-2: [4md704de9[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:24:18 fail bench-node-3: [4m42a9ecd[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:24:18 attempt 12 -> 0/3 ready; sleeping 45s
+03:25:04 fail bench-node-1: [4md553440[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:25:06 fail bench-node-2: [4me2932ac[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:25:07 fail bench-node-3: [4mded2ecf[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:25:07 attempt 13 -> 0/3 ready; sleeping 45s
+03:25:53 fail bench-node-1: [4mbf27f75[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:25:54 fail bench-node-2: [4mdcb344c[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:25:55 fail bench-node-3: [4mfc93a9a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:25:55 attempt 14 -> 0/3 ready; sleeping 45s
+03:26:41 fail bench-node-1: [4m5890b63[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:26:43 fail bench-node-2: [4md8a7d91[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:26:44 fail bench-node-3: [4m423e46b[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:26:44 attempt 15 -> 0/3 ready; sleeping 45s
+03:27:30 fail bench-node-1: [4m15cb458[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:27:31 fail bench-node-2: [4md599876[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:27:32 fail bench-node-3: [4ma827532[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:27:32 attempt 16 -> 0/3 ready; sleeping 45s
+03:28:18 fail bench-node-1: [4m088b662[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:28:20 fail bench-node-2: [4m11feab0[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:28:21 fail bench-node-3: [4m7fb7264[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:28:21 attempt 17 -> 0/3 ready; sleeping 45s
+03:29:07 fail bench-node-1: [4mb8ce719[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:29:08 fail bench-node-2: [4m4c1c07c[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:29:09 fail bench-node-3: [4mda5f6f3[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:29:09 attempt 18 -> 0/3 ready; sleeping 45s
+03:29:55 fail bench-node-1: [4m7f80b6a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:29:57 fail bench-node-2: [4m6299ee1[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:29:58 fail bench-node-3: [4m195b535[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:29:58 attempt 19 -> 0/3 ready; sleeping 45s
+03:30:06 fail bench-node-1: [4m661c074[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:30:08 fail bench-node-2: [4mbeac809[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:30:09 fail bench-node-3: [4m06d0116[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:30:09 attempt 1 -> 0/3 ready; sleeping 45s
+03:30:55 fail bench-node-1: [4mac3e4ee[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:30:56 fail bench-node-2: [4m2d18d9d[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:30:57 fail bench-node-3: [4m4e4f049[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:30:57 attempt 2 -> 0/3 ready; sleeping 45s
+03:31:43 fail bench-node-1: [4mcf814cc[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:31:44 fail bench-node-2: [4m8d91368[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:31:46 fail bench-node-3: [4mf5e0fa0[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:31:46 attempt 3 -> 0/3 ready; sleeping 45s
+03:32:32 fail bench-node-1: [4mb9fcbe5[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:32:33 fail bench-node-2: [4mfe68d3a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:32:34 fail bench-node-3: [4m59f16e1[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:32:34 attempt 4 -> 0/3 ready; sleeping 45s
+03:33:20 fail bench-node-1: [4mbfabeb4[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:33:21 fail bench-node-2: [4mbb15655[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:33:22 fail bench-node-3: [4m2bd0e78[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:33:22 attempt 5 -> 0/3 ready; sleeping 45s
+03:34:09 fail bench-node-1: [4md335eda[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:34:10 fail bench-node-2: [4m4e342d4[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:34:11 fail bench-node-3: [4maca47d6[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:34:11 attempt 6 -> 0/3 ready; sleeping 45s
+03:34:57 fail bench-node-1: [4m89530c5[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:34:58 fail bench-node-2: [4m446b3e6[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:34:59 fail bench-node-3: [4m5b15f40[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:34:59 attempt 7 -> 0/3 ready; sleeping 45s
+03:35:45 fail bench-node-1: [4m7f8af52[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:35:46 fail bench-node-2: [4m7e26f49[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:35:47 fail bench-node-3: [4m3ca3930[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:35:47 attempt 8 -> 0/3 ready; sleeping 45s
+03:36:33 fail bench-node-1: [4m2138140[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:36:34 fail bench-node-2: [4m93c6493[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:36:35 fail bench-node-3: [4m7b5fdac[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:36:35 attempt 9 -> 0/3 ready; sleeping 45s
+03:37:22 fail bench-node-1: [4md2ea5dc[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:37:23 fail bench-node-2: [4m9ff2bcc[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:37:24 fail bench-node-3: [4m49693d3[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:37:24 attempt 10 -> 0/3 ready; sleeping 45s
+03:38:10 fail bench-node-1: [4mb29ff81[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:38:11 fail bench-node-2: [4m00d9056[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:38:12 fail bench-node-3: [4m9997c3d[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:38:12 attempt 11 -> 0/3 ready; sleeping 45s
+03:38:58 fail bench-node-1: [4mc99349f[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:38:59 fail bench-node-2: [4md8ccb57[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:39:00 fail bench-node-3: [4m978ad7e[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:39:00 attempt 12 -> 0/3 ready; sleeping 45s
+03:39:46 fail bench-node-1: [4m641c2c6[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:39:47 fail bench-node-2: [4m0d30e13[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:39:48 fail bench-node-3: [4mf1ea864[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:39:48 attempt 13 -> 0/3 ready; sleeping 45s
+03:40:34 fail bench-node-1: [4m36f817d[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:40:36 fail bench-node-2: [4md5f683b[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:40:37 fail bench-node-3: [4m08eb632[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:40:37 attempt 14 -> 0/3 ready; sleeping 45s
+03:41:23 fail bench-node-1: [4m121286f[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:41:24 fail bench-node-2: [4ma4d183a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:41:25 fail bench-node-3: [4m8075e54[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:41:25 attempt 15 -> 0/3 ready; sleeping 45s
+03:42:11 fail bench-node-1: [4mbb3f1e1[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:42:13 fail bench-node-2: [4m33cc718[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:42:14 fail bench-node-3: [4m8f2170a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:42:14 attempt 16 -> 0/3 ready; sleeping 45s
+03:43:00 fail bench-node-1: [4m6892a25[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:43:01 fail bench-node-2: [4m810c450[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:43:02 fail bench-node-3: [4m993491b[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:43:02 attempt 17 -> 0/3 ready; sleeping 45s
+03:43:48 fail bench-node-1: [4m279da30[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:43:49 fail bench-node-2: [4m154e489[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:43:50 fail bench-node-3: [4m72be89a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:43:50 attempt 18 -> 0/3 ready; sleeping 45s
+03:44:36 fail bench-node-1: [4m3a4a449[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:44:38 fail bench-node-2: [4mfa2034a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:44:39 fail bench-node-3: [4m4ef021e[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:44:39 attempt 19 -> 0/3 ready; sleeping 45s
+03:45:25 fail bench-node-1: [4m57964a1[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:45:26 fail bench-node-2: [4mbf778ee[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:45:27 fail bench-node-3: [4m7c28f8e[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:45:27 attempt 20 -> 0/3 ready; sleeping 45s
+03:46:13 fail bench-node-1: [4mcbd5879[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:46:14 fail bench-node-2: [4md7d5e4b[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:46:15 fail bench-node-3: [4mede5334[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:46:15 attempt 21 -> 0/3 ready; sleeping 45s
+03:47:01 fail bench-node-1: [4m376627a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:47:02 fail bench-node-2: [4mbdca2de[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:47:03 fail bench-node-3: [4m78a3a1f[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:47:03 attempt 22 -> 0/3 ready; sleeping 45s
+03:47:50 fail bench-node-1: [4md147085[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:47:51 fail bench-node-2: [4m0a00c1f[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:47:52 fail bench-node-3: [4m3b8d241[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:47:52 attempt 23 -> 0/3 ready; sleeping 45s
+03:48:38 fail bench-node-1: [4m328fff7[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:48:39 fail bench-node-2: [4m06da33a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:48:40 fail bench-node-3: [4mdb746cf[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:48:40 attempt 24 -> 0/3 ready; sleeping 45s
+03:49:27 fail bench-node-1: [4mab9a653[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:49:28 fail bench-node-2: [4m0b63fc2[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:49:30 fail bench-node-3: [4m22d9ebb[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:49:30 attempt 25 -> 0/3 ready; sleeping 45s
+03:50:17 fail bench-node-1: [4md340737[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:50:18 fail bench-node-2: [4mdd7f99c[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:50:19 fail bench-node-3: [4m4d07b4a[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:50:19 attempt 26 -> 0/3 ready; sleeping 45s
+03:51:06 fail bench-node-1: [4m5acfbb0[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:51:07 fail bench-node-2: [4m0e4ab7e[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:51:08 fail bench-node-3: [4m36d19b3[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:51:08 attempt 27 -> 0/3 ready; sleeping 45s
+03:51:54 fail bench-node-1: [4me52ff50[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:51:55 fail bench-node-2: [4md1f76fd[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:51:56 fail bench-node-3: [4m8d50136[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:51:56 attempt 28 -> 0/3 ready; sleeping 45s
+03:52:43 fail bench-node-1: [4mbe4e025[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:52:45 fail bench-node-2: [4m9074c1b[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:52:46 fail bench-node-3: [4m7e38a36[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:52:46 attempt 29 -> 0/3 ready; sleeping 45s
+03:53:33 fail bench-node-1: [4m5db95ff[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:53:34 fail bench-node-2: [4med73b98[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:53:36 fail bench-node-3: [4m07461ad[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:53:36 attempt 30 -> 0/3 ready; sleeping 45s
+03:54:24 fail bench-node-1: [4mbcfbcc4[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:54:26 fail bench-node-2: [4mc3dfd00[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:54:29 fail bench-node-3: [4maebb4ad[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:54:29 attempt 31 -> 0/3 ready; sleeping 45s
+03:55:15 fail bench-node-1: [4m91ec630[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:55:17 fail bench-node-2: [4m876accb[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:55:19 fail bench-node-3: [4m253cbc0[0m[4m........&[0m[4mvariant[0m[4m=[0m[4mDEFAULT[0m[4m&[0m[4maccelerator[0m[4m=[0m[4mNONE[0m
+03:55:19 attempt 32 -> 0/3 ready; sleeping 45s

@@ -4,7 +4,10 @@ NOTE: env must be set before numpy import -> run via colab exec --env ... per va
 This script just benches the CURRENT env config; orchestrate calls it 3x.
 """
 import os, sys, json, time
-_HERE = os.path.dirname(os.path.realpath(__file__))
+try:
+    _HERE = os.path.dirname(os.path.realpath(__file__))
+except NameError:  # executed via colab exec (notebook semantics, no __file__)
+    _HERE = os.getcwd()
 sys.path.insert(0, _HERE)
 for _d in ("/content", _HERE):
     if os.path.isfile(os.path.join(_d, "src", "impls.py")):
