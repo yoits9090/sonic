@@ -10,7 +10,7 @@ REMOTE_BASE = "/content/ft_evals3"   # per-attempt subdir added at runtime: {REM
 UPLOAD_FILES = [
     "src/config.py", "src/random_state.py", "src/impls.py",
     "evals/run_all.py", "evals/eval_correctness.py", "evals/eval_latency.py",
-    "evals/eval_v2.py", "evals/eval_v3.py", "evals/eval_v4.py", "evals/eval_v5.py", "evals/registry.py",
+    "evals/eval_v2.py", "evals/eval_v3.py", "evals/eval_v4.py", "evals/eval_v5.py", "evals/eval_v6.py", "evals/registry.py",
     "ground_up/build.sh", "ground_up/ft.h", "ground_up/matmul.c", "ground_up/transformer.c",
 ]
 
@@ -20,14 +20,16 @@ RUNNERS = {
     "v3": ("evals/eval_v3.py", ["--node", "{node}", "--attempt", "{attempt}"]),
     "v4": ("evals/eval_v4.py", ["--node", "{node}", "--attempt", "{attempt}"]),
     "v5": ("evals/eval_v5.py", ["--node", "{node}", "--attempt", "{attempt}"]),
+    "v6": ("evals/eval_v6.py", ["--node", "{node}", "--attempt", "{attempt}"]),
 }
-ALL_SEQ = ["v1", "v2", "v3", "v4", "v5"]
+ALL_SEQ = ["v1", "v2", "v3", "v4", "v5", "v6"]
 SUMMARY_FILES = {
     "v1": ["results/{node}_evals.json"],
     "v2": ["results/evals_v2_{node}.json", "results/evals_v2_{node}_{impl}_a{attempt}.json"],
     "v3": ["results/evals_v3_{node}.json", "results/evals_v3_{node}_{impl}_a{attempt}.json"],
     "v4": ["results/evals_v4_{node}.json", "results/evals_v4_{node}_{impl}_a{attempt}.json"],
     "v5": ["results/evals_v5_{node}.json", "results/evals_v5_{node}_{impl}_a{attempt}.json"],
+    "v6": ["results/evals_v6_{node}.json", "results/evals_v6_{node}_{impl}_a{attempt}.json"],
 }
 
 

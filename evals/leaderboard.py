@@ -63,6 +63,10 @@ def extract_records(path, d):
                 for b, r in v["batch_sweep"].items():
                     key = r["shape"] if r.get("shape") else cfg_key({"batch": int(b), "seq_len": 32})
                     yield impl, key, r["median_us"], node, ts
+            elif isinstance(v, dict) and "cells" in v:  # v6 op-domain cells
+                for key, r in v["cells"].items():
+                    if r.get("correct"):
+                        yield impl, r["shape"] if r.get("shape") else key, r["median_us"], node, ts
             elif isinstance(v, dict) and "configs" in v:  # v3 latency seeds
                 for cname, r in v["configs"].items():
                     ls = r.get("latency_seeds")

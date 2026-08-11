@@ -759,6 +759,14 @@
     "evals_v5_bench-node-3_c_v6_a5.json",
     "evals_v5_bench-node-3_c_ground_up_a5.json"
    ]
+  },
+  {
+   "ts": "2026-08-11T05:50:53-0400",
+   "node": "bench-node-3",
+   "gen": "v6",
+   "attempt": 1,
+   "impl": null,
+   "files": []
   }
  ]
 }

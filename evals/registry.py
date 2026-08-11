@@ -57,6 +57,18 @@ REGISTRY = {
             "headroom": "theoretical FLOPs, achieved GF/s, pure-matmul ceiling, overhead x, headroom %",
         },
     },
+    "v6": {
+        "script": "evals/eval_v6.py",
+        "args": ["--node", "{node}", "--attempt", "{attempt}"],
+        "summary": "results/evals_v6_{node}.json",
+        "per_impl": "results/evals_v6_{node}_{impl}_a{attempt}.json",
+        "criteria": {
+            "op-domain": "median_us < 1000 on ALL cells: batch{1,4,16} x seq{16,32,64} x cfg{tiny,default}",
+            "roofline": "achieved GF/s vs measured peak GEMM GF/s per cfg",
+            "cold": "first-call latency incl. ctypes/prep/alloc vs steady median",
+            "b_general": "flag impls failing batch>1 cells (B=1-only) and assess B>1 worth",
+        },
+    },
 }
 
 
