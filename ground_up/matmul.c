@@ -49,6 +49,9 @@ static void mm_naive(const float *restrict A, const float *restrict B,
 static void mm_blocked(const float *restrict A, const float *restrict B,
                        float *restrict C, int M, int N, int K, int acc) {
     const int TI = 8, TK = 8;
+#if !defined(FT_OMP_MIN)
+#define FT_OMP_MIN 262144
+#endif
 #if defined(FT_OPENMP)
 #pragma omp parallel for schedule(static) collapse(2)
 #endif
@@ -87,11 +90,14 @@ static void mm_blocked(const float *restrict A, const float *restrict B,
 /* ------------------------------------------------------------------ */
 static void mm_blocked8(const float *restrict A, const float *restrict B,
                         float *restrict C, int M, int N, int K, int acc) {
-#if defined(FT_OPENMP)
-#pragma omp parallel for schedule(static) collapse(2) if ((long)M * N * K >= 262144)
+#if !defined(FT_OMP_MIN)
+#define FT_OMP_MIN 262144
 #endif
-    for (int i0 = 0; i0 < M; i0 += 8) {
-        for (int j0 = 0; j0 < N; j0 += 8) {
+#if defined(FT_OPENMP)
+#pragma omp parallel for schedule(static) collapse(2) if ((long)M * N * K >= FT_OMP_MIN)
+#endif
+    for (int j0 = 0; j0 < N; j0 += 8) {   /* j-outer: B streams once, A (small) is re-read */
+        for (int i0 = 0; i0 < M; i0 += 8) {
             float accv[8][8];
             if (acc) {
                 for (int ii = 0; ii < 8; ii++)
@@ -125,11 +131,14 @@ static void mm_blocked8(const float *restrict A, const float *restrict B,
  * the tiles of 8x8 for wide N, at the cost of less B-row reuse across i. */
 static void mm_blocked8_4x16(const float *restrict A, const float *restrict B,
                              float *restrict C, int M, int N, int K, int acc) {
-#if defined(FT_OPENMP)
-#pragma omp parallel for schedule(static) collapse(2) if ((long)M * N * K >= 262144)
+#if !defined(FT_OMP_MIN)
+#define FT_OMP_MIN 262144
 #endif
-    for (int i0 = 0; i0 < M; i0 += 4) {
-        for (int j0 = 0; j0 < N; j0 += 16) {
+#if defined(FT_OPENMP)
+#pragma omp parallel for schedule(static) collapse(2) if ((long)M * N * K >= FT_OMP_MIN)
+#endif
+    for (int j0 = 0; j0 < N; j0 += 16) {   /* j-outer: B streams once, A (small) is re-read */
+        for (int i0 = 0; i0 < M; i0 += 4) {
             float accv[4][16];
             if (acc) {
                 for (int ii = 0; ii < 4; ii++)
@@ -159,6 +168,47 @@ static void mm_blocked8_4x16(const float *restrict A, const float *restrict B,
     }
 }
 
+/* 4x32 tile: two 16-wide halves per (ii,kk) share the scalar a-load and
+ * halve the tile count (fewer init/writeback passes) vs 4x16. accv[ii] is
+ * 32 floats = 8 ymm, live within a (ii,kk) group. */
+static void mm_blocked8_4x32(const float *restrict A, const float *restrict B,
+                             float *restrict C, int M, int N, int K, int acc) {
+#if defined(FT_OPENMP)
+#pragma omp parallel for schedule(static) collapse(2) if ((long)M * N * K >= FT_OMP_MIN)
+#endif
+    for (int j0 = 0; j0 < N; j0 += 32) {
+        for (int i0 = 0; i0 < M; i0 += 4) {
+            float accv[4][32];
+            if (acc) {
+                for (int ii = 0; ii < 4; ii++)
+                    for (int jj = 0; jj < 32; jj++)
+                        accv[ii][jj] = C[(size_t)(i0 + ii) * N + j0 + jj];
+            } else {
+                for (int ii = 0; ii < 4; ii++)
+                    for (int jj = 0; jj < 32; jj++) accv[ii][jj] = 0.0f;
+            }
+            for (int k = 0; k < K; k += 8) {
+                for (int ii = 0; ii < 4; ii++) {
+                    const float *ai = A + (size_t)(i0 + ii) * K + k;
+                    float *av = accv[ii];
+#pragma GCC unroll 8
+                    for (int kk = 0; kk < 8; kk++) {
+                        float a = ai[kk];
+                        const float *bk = B + (size_t)(k + kk) * N + j0;
+#pragma GCC unroll 16
+                        for (int jj = 0; jj < 16; jj++) av[jj] += a * bk[jj];
+#pragma GCC unroll 16
+                        for (int jj = 0; jj < 16; jj++) av[16 + jj] += a * bk[16 + jj];
+                    }
+                }
+            }
+            for (int ii = 0; ii < 4; ii++)
+                for (int jj = 0; jj < 32; jj++)
+                    C[(size_t)(i0 + ii) * N + j0 + jj] = accv[ii][jj];
+        }
+    }
+}
+
 /* ------------------------------------------------------------------ */
 /* Dispatch.                                                           */
 /* ------------------------------------------------------------------ */
@@ -168,8 +218,18 @@ void ft_mm(const float *A, const float *B, float *C,
     mm_naive(A, B, C, M, N, K, acc);
 #elif FT_KERNEL == 3
     if ((M & 7) == 0 && (N & 7) == 0 && (K & 7) == 0) {
-#if defined(FT_TILE16)
+#if defined(FT_TILE16) && FT_TILE16 == 1
         mm_blocked8_4x16(A, B, C, M, N, K, acc);
+#elif defined(FT_TILE16) && FT_TILE16 == 2
+        if (M >= 64)  /* batch path: 8x8 reuses B rows across more i */
+            mm_blocked8(A, B, C, M, N, K, acc);
+        else
+            mm_blocked8_4x16(A, B, C, M, N, K, acc);
+#elif defined(FT_TILE16) && FT_TILE16 == 3
+        if ((N & 31) == 0)
+            mm_blocked8_4x32(A, B, C, M, N, K, acc);
+        else
+            mm_blocked8_4x16(A, B, C, M, N, K, acc);
 #else
         mm_blocked8(A, B, C, M, N, K, acc);
 #endif

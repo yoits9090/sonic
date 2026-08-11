@@ -25,6 +25,14 @@ echo "== build libft_v8.so (v7 + 4x16 tiles)"
 $CC $CFLAGS -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=1 -o libft_v8.so matmul.c transformer.c -lm
 echo "== build libft_v9.so (v8 + OpenMP)"
 $CC $CFLAGS -fopenmp -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=1 -DFT_OPENMP=1 -o libft_v9.so matmul.c transformer.c -lm
-echo "== build libft.so (default champion: v9 config; wrapper reuses workspace/output)"
-cp libft_v9.so libft.so
+echo "== build libft_v10.so (v9 + vectorizable fast-exp + auto-tile by M, +omp)"
+$CC $CFLAGS -fopenmp -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=2 -DFT_OPENMP=1 -o libft_v10.so matmul.c transformer.c -lm
+echo "== build libft_v11.so (v10 + 4x16 tiles always, +omp)"
+$CC $CFLAGS -fopenmp -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=1 -DFT_OPENMP=1 -o libft_v11.so matmul.c transformer.c -lm
+echo "== build libft_v12.so (v10 + 8x8 tiles always, +omp)"
+$CC $CFLAGS -fopenmp -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=0 -DFT_OPENMP=1 -o libft_v12.so matmul.c transformer.c -lm
+echo "== build libft_v14.so (v9 + blocked attention, +omp)"
+$CC $CFLAGS -fopenmp -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=1 -DFT_ATTN_BLOCK=1 -DFT_OPENMP=1 -o libft_v14.so matmul.c transformer.c -lm
+echo "== build libft.so (default champion: v14 config; wrapper reuses workspace/output)"
+cp libft_v14.so libft.so
 ls -la libft*.so

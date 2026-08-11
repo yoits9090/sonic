@@ -39,6 +39,10 @@
 #include <omp.h>
 #endif
 
+#if !defined(FT_ATTN_OMP_MIN)
+#define FT_ATTN_OMP_MIN 2048
+#endif
+
 /* ft_mm from matmul.c */
 void ft_mm(const float *A, const float *B, float *C,
            int M, int N, int K, int acc);
@@ -51,21 +55,30 @@ void ft_mm(const float *A, const float *B, float *C,
 #define FT_FASTEXP 0
 #endif
 
+#if !defined(FT_ATTN_BLOCK)
+#define FT_ATTN_BLOCK 0
+#endif
+
 #if !defined(FT_FFN_MM)
 #define FT_FFN_MM 0
 #endif
 
 /* exp(x) for x <= 0, ~3e-9 relative error (Chebyshev-node LS fit of 2^f on
- * [0,1), degree 6), ~3-4x faster than glibc expf.
- * exp(x) = 2^(x*log2e): split into int part (ldexp) + poly for 2^f. */
+ * [0,1), degree 6), ~3-4x faster than glibc expf and fully vectorizable:
+ * exp(x) = 2^(x*log2e); the integer part is folded into the float exponent
+ * bits (branch-free, SIMD-friendly) instead of a scalar ldexpf. */
 static inline float fast_exp(float x) {
+    if (x < -88.0f) return 0.0f;   /* underflow guard (masked entries) */
     float t = x * 1.4426950408889634f;
     float n = floorf(t);
     float f = t - n;
     float p = 1.0000000025791764f + f * (0.6931469288712638f + f * (0.24023050092090045f
               + f * (0.055480429145105356f + f * (0.009684577477983502f
               + f * (0.0012387831477474515f + f * 0.0002187751645542967f)))));
-    return ldexpf(p, (int)n);
+    union { float f; int32_t i; } u;
+    u.f = p;
+    u.i += (int32_t)n << 23;   /* scale by 2^n via exponent field */
+    return u.f;
 }
 #define EXP(x) (FT_FASTEXP ? fast_exp(x) : expf(x))
 
@@ -143,10 +156,13 @@ static inline float dot16(const float *restrict a, const float *restrict b) {
     return s0 + s1;
 }
 
-static void attn_fused(const float *restrict Q, const float *restrict K,
-                       const float *restrict V, float *restrict ctx,
-                       int B, int S, int H, int dh, float inv,
-                       float *restrict scores, int stride) {
+/* Blocked attention: per (b,h), scores = Q@K^T and ctx = att@V via the fast
+ * matmul kernel, with a vectorized row softmax on contiguous (S,S) blocks.
+ * Matches numpy_vec's math exactly (mask -1e9, softmax over all S). */
+static void attn_blocked(const float *restrict Q, const float *restrict K,
+                         const float *restrict V, float *restrict ctx,
+                         int B, int S, int H, int dh, float inv,
+                         float *restrict scratch, int stride) {
     int d = H * dh;
 #if defined(FT_OPENMP)
 #pragma omp parallel for schedule(static) collapse(2) if ((long)B * H * S * S >= 2048)
@@ -154,45 +170,115 @@ static void attn_fused(const float *restrict Q, const float *restrict K,
     for (int b = 0; b < B; b++) {
         for (int h = 0; h < H; h++) {
 #if defined(FT_OPENMP)
-            float *sc = scores + (size_t)omp_get_thread_num() * S; /* thread-private */
+            float *sc = scratch + (size_t)omp_get_thread_num() * (4 * S * dh + S * S);
 #else
-            float *sc = scores;
+            float *sc = scratch;
 #endif
+            float *qc = sc;                      /* S*dh */
+            float *kc = qc + (size_t)S * dh;     /* S*dh */
+            float *vc = kc + (size_t)S * dh;     /* S*dh */
+            float *kt = vc + (size_t)S * dh;     /* dh*S (same size, separate from att!) */
+            float *att = kt + (size_t)S * dh;    /* S*S */
+            for (int k = 0; k < S; k++) {
+                const float *src = Q + ((size_t)b * S + k) * stride + h * dh;
+                memcpy(qc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
+                src = K + ((size_t)b * S + k) * stride + h * dh;
+                memcpy(kc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
+                src = V + ((size_t)b * S + k) * stride + h * dh;
+                memcpy(vc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
+            }
+            /* K^T (dh x S) from kc (S x dh) */
+            for (int k = 0; k < S; k++)
+                for (int j = 0; j < dh; j++) kt[j * S + k] = kc[k * dh + j];
+            ft_mm(qc, kt, att, S, S, dh, 0);     /* scores (S x S) */
+            for (int i = 0; i < S * S; i++) att[i] *= inv;   /* 1/sqrt(dh) like the ref */
+            /* causal mask + row softmax (vectorized over the contiguous row) */
             for (int s = 0; s < S; s++) {
-                const float *q = Q + ((size_t)b * S + s) * stride + h * dh;
-                /* score for k=0 seeds the running max (keeps everything
-                 * finite under -ffast-math, no -INFINITY needed) */
-                const float *k0 = K + ((size_t)b * S) * stride + h * dh;
-                float acc0 = (dh == 16) ? dot16(q, k0) : _dot_generic(q, k0, dh);
-                acc0 *= inv;
-                sc[0] = acc0;
-                float m = acc0;
-                for (int k = 1; k <= s; k++) {
-                    const float *kk = K + ((size_t)b * S + k) * stride + h * dh;
-                    float acc = (dh == 16) ? dot16(q, kk) : _dot_generic(q, kk, dh);
-                    acc *= inv;
-                    sc[k] = acc;
-                    if (acc > m) m = acc;
-                }
+                float *row = att + (size_t)s * S;
+                for (int k = s + 1; k < S; k++) row[k] = -1e9f;
+                float m = row[0];
+                for (int k = 1; k < S; k++) if (row[k] > m) m = row[k];
                 float sum = 0.0f;
-                for (int k = 0; k <= s; k++) {
-                    float e = EXP(sc[k] - m);
-                    sc[k] = e;
+#pragma omp simd reduction(+:sum)
+                for (int k = 0; k < S; k++) {
+                    float e = EXP(row[k] - m);
+                    row[k] = e;
                     sum += e;
                 }
                 float r = 1.0f / sum;
-                float *o = ctx + ((size_t)b * S + s) * d + h * dh;
-                for (int j = 0; j < dh; j++) o[j] = 0.0f;
-                for (int k = 0; k <= s; k++) {
-                    float p = sc[k] * r;
-                    const float *vv = V + ((size_t)b * S + k) * stride + h * dh;
-                    for (int j = 0; j < dh; j++) o[j] += p * vv[j];
-                }
+                for (int k = 0; k < S; k++) row[k] *= r;
+            }
+            ft_mm(att, vc, qc, S, dh, S, 0);      /* ctx (S x dh) into qc (reused) */
+            for (int k = 0; k < S; k++) {
+                float *dst = ctx + ((size_t)b * S + k) * d + h * dh;
+                memcpy(dst, qc + (size_t)k * dh, (size_t)dh * sizeof(float));
             }
         }
     }
 }
 
+static void attn_fused(const float *restrict Q, const float *restrict K,
+                       const float *restrict V, float *restrict ctx,
+                       int B, int S, int H, int dh, float inv,
+                       float *restrict scores, int stride) {
+    int d = H * dh;
+#if defined(FT_OPENMP)
+#pragma omp parallel for schedule(static) collapse(2) if ((long)B * H * S * S >= FT_ATTN_OMP_MIN)
+#endif
+    for (int b = 0; b < B; b++) {
+        for (int h = 0; h < H; h++) {
+#if defined(FT_OPENMP)
+            float *sc = scores + (size_t)omp_get_thread_num() * S; /* thread-private */
+            /* contiguous K/V copies for this (b,h): keys are 64B apart in the
+             * qkv buffer (row stride 3d), which wastes a cache line per key;
+             * a packed (S,dh) copy makes every dot and ctx pass stream L1.
+             * Per-thread pads: 2*S*dh floats after the 8*S score slots. */
+            float *kc = scores + (size_t)S * 8 + (size_t)omp_get_thread_num() * (2 * S * dh);
+            float *vc = kc + (size_t)S * dh;
+#else
+            float *sc = scores;
+            float *kc = scores + (size_t)S * 8;
+            float *vc = kc + (size_t)S * dh;
+#endif
+            for (int k = 0; k < S; k++) {
+                const float *src = K + ((size_t)b * S + k) * stride + h * dh;
+                memcpy(kc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
+                src = V + ((size_t)b * S + k) * stride + h * dh;
+                memcpy(vc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
+            }
+            const float *qbase = Q + ((size_t)b * S) * stride + h * dh;
+            for (int s = 0; s < S; s++) {
+                const float *q = qbase + (size_t)s * stride;
+                /* score for k=0 seeds the running max (keeps everything
+                 * finite under -ffast-math, no -INFINITY needed) */
+                float acc0 = (dh == 16) ? dot16(q, kc) : _dot_generic(q, kc, dh);
+                acc0 *= inv;
+                sc[0] = acc0;
+                float m = acc0;
+                for (int k = 1; k <= s; k++) {
+                    float acc = (dh == 16) ? dot16(q, kc + (size_t)k * dh)
+                                           : _dot_generic(q, kc + (size_t)k * dh, dh);
+                    acc *= inv;
+                    sc[k] = acc;
+                    if (acc > m) m = acc;
+                }
+                /* fused exp + ctx accumulation: o is scaled by 1/sum at the
+                 * end, so the exp and context passes share one loop (no es[]). */
+                float *o = ctx + ((size_t)b * S + s) * d + h * dh;
+                for (int j = 0; j < dh; j++) o[j] = 0.0f;
+                float sum = 0.0f;
+                for (int k = 0; k <= s; k++) {
+                    float e = EXP(sc[k] - m);
+                    sum += e;
+                    const float *vv = vc + (size_t)k * dh;
+                    for (int j = 0; j < dh; j++) o[j] += e * vv[j];
+                }
+                float r = 1.0f / sum;
+                for (int j = 0; j < dh; j++) o[j] *= r;
+            }
+        }
+    }
+}
 /* ------------------------------------------------------------------ */
 /* Naive attention: materialize SxS scores per (b,h), mask, softmax,    */
 /* matmul against V. scratch needs 2*S*dh + S*S + S floats.             */
@@ -284,7 +370,12 @@ size_t ft_scratch_bytes(int B, int S, int d_model, int d_ff) {
     size_t ffn = n * (size_t)d_ff;                       /* naive path */
     size_t attn = 2 * (size_t)S * d + (size_t)S * S + S; /* naive path, over-provisioned */
     size_t row = (size_t)(d_ff > 3 * d_model ? d_ff : 3 * d_model); /* fused path */
-    size_t tot = h + h2 + qkv + ctx + ffn + attn + row + 8 * S + 16;
+#if FT_ATTN_BLOCK
+    size_t attn_scratch = 8 * (4 * (size_t)S * d_model + (size_t)S * S);
+#else
+    size_t attn_scratch = 8 * S + 16 * (size_t)S * d_model;
+#endif
+    size_t tot = h + h2 + qkv + ctx + ffn + attn + row + attn_scratch + 16;
     return tot * sizeof(float) + 64;
 }
 
@@ -311,7 +402,11 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
     float *ffnbuf = (float *)cur; cur += n * dff * sizeof(float);      /* naive */
     float *attnsc = (float *)cur; cur += (2 * (size_t)S * d + (size_t)S * S + S) * sizeof(float); /* naive */
     float *urow = (float *)cur; cur += (size_t)(dff > 3 * d ? dff : 3 * d) * sizeof(float);
-    float *scores = (float *)cur; cur += 8 * (size_t)S * sizeof(float);  /* per-thread (up to 8) */
+    size_t attn_need = (8 * (size_t)S + 16 * (size_t)S * dh);
+#if FT_ATTN_BLOCK
+    attn_need = 8 * (4 * (size_t)S * dh + (size_t)S * S);
+#endif
+    float *scores = (float *)cur; cur += attn_need * sizeof(float);  /* per-thread (up to 8) scratch */
     if (cur - (uintptr_t)scratch > scratch_bytes) return -1;
 
     embed(W->emb, x, h, B, S, d);
@@ -329,7 +424,11 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
         TOC(qkv, "qkv");
         if (dbg) { memcpy(dbg, qkv, n * 3 * d * sizeof(float)); dbg += n * 3 * d; }
         TIC(attn);
+#if FT_ATTN_BLOCK
+        attn_blocked(qkv, qkv + d, qkv + 2 * d, ctx, B, S, H, dh, inv, scores, 3 * d);
+#else
         attn_fused(qkv, qkv + d, qkv + 2 * d, ctx, B, S, H, dh, inv, scores, 3 * d);
+#endif
         TOC(attn, "attn");
         if (dbg) { memcpy(dbg, ctx, n * d * sizeof(float)); dbg += n * d; }
         TIC(wo);

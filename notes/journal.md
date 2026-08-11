@@ -222,3 +222,8 @@ in isolation; full forward ~714 -> remainder is call overhead + noise). ~40 nump
   (specialized 8x8 kernel) -> v6 350-397 (+omp) -> v7 366-387 (fastexp+ffn-mm) -> v9 330-362
   (4x16+fastexp+ffn-mm+omp). All correctness-passing.
 - results/ now holds attempts 04-11 JSONs (correctness+latency) + evals_v3 a4/a5/a10.
+
+## research batch escalation (agent: researcher, 2026-08-11)
+- B=4 DEFAULT escalation: computed budget = 13.6M MACs (27.3 MFLOP), 512KB weights, 2-core fp32 AVX2 peak ~80 GFLOP/s -> floor ~340us, realistic 450-700us -> sub-ms needs the GEMM playbook, not overhead tricks. Batch folds into M=128 rows; weights reused 128x -> compute-bound, weight-stationary wins.
+- TOP-5 updated in notes/research.md with B=4 section: (1) register-blocked weight-stationary microkernel + weights pre-packed at load (llama.cpp repack/llamafile sgemm pattern), (2) fold batch into rows + 2-thread row-chunking (llama.cpp mul_mat does exactly this), (3) int16/int8 static weights (2-4x MACs/cycle; int8 tolerance check first), (4) numpy path: reshape (B,S,d)->(B*S,d) single 2-D sgemm, never per-item loops / 4-D strided matmul (OpenBLAS has no strided-batched API, #5447), (5) fused causal attention over flattened rows with per-item masking.
+- new sources: OpenBLAS #5447, Intel batch GEMM article, llama.cpp repack.cpp + llamafile sgemm.cpp + mul_mat threading, DeepWiki batch pipeline.

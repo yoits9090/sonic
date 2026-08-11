@@ -70,6 +70,10 @@ IMPLS = {"numpy_naive": numpy_naive, "numpy_vec": numpy_vec}
 import ctypes as _ct
 import os as _os
 
+# Pin OpenMP to the 2 Colab vCPUs (stable thread placement for the race)
+_os.environ.setdefault("OMP_NUM_THREADS", "2")
+_os.environ.setdefault("OMP_PROC_BIND", "true")
+
 _GROUND_UP = _os.environ.get("FT_GROUND_UP_DIR",
                              _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "..", "ground_up"))
 
@@ -210,7 +214,11 @@ _register_c("c_v6", "libft_v6.so", rw=True, ro=True)  # specialized + OpenMP + s
 _register_c("c_v7", "libft_v7.so", rw=True, ro=True)  # + fast-exp softmax + ffn-via-matmul
 _register_c("c_v8", "libft_v8.so", rw=True, ro=True)  # + 4x16 tiles
 _register_c("c_v9", "libft_v9.so", rw=True, ro=True)  # + OpenMP
-_register_c("c_ground_up", "libft.so", rw=True, ro=True)  # default best build (v6 kernels)
+_register_c("c_v10", "libft_v10.so", rw=True, ro=True)  # batch-aware: vector exp + auto-tile
+_register_c("c_v11", "libft_v11.so", rw=True, ro=True)  # 4x16 tiles always
+_register_c("c_v12", "libft_v12.so", rw=True, ro=True)  # 8x8 tiles always
+_register_c("c_v14", "libft_v14.so", rw=True, ro=True)  # blocked-attention + fused-exp
+_register_c("c_ground_up", "libft.so", rw=True, ro=True)  # default best build (v9 kernels)
 
 
 # ---------- numpy-optimizer agents' impls ----------

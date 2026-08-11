@@ -1,0 +1,240 @@
+{
+ "impl": "c_ground_up",
+ "node": "bench-node-2",
+ "generation": "v6",
+ "attempt": 6,
+ "numpy_version": "2.0.2",
+ "criteria": {
+  "abs_tol": 0.001,
+  "sub_ms_us": 1000.0
+ },
+ "cells": {
+  "tiny_b1_s16": {
+   "correct": true,
+   "max_abs_err": 1.1175338841557664e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=16,V=256,B=1",
+   "median_us": 48.486,
+   "p99_us": 58.18132,
+   "max_us": 100.489,
+   "iters": 2000,
+   "gflops": 11.489007136080518,
+   "sub_ms": true
+  },
+  "tiny_b1_s32": {
+   "correct": true,
+   "max_abs_err": 1.1702461261697827e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=32,V=256,B=1",
+   "median_us": 60.614,
+   "p99_us": 78.51917999999999,
+   "max_us": 107.084,
+   "iters": 2000,
+   "gflops": 19.461642524829248,
+   "sub_ms": true
+  },
+  "tiny_b1_s64": {
+   "correct": true,
+   "max_abs_err": 1.630788780238035e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=64,V=256,B=1",
+   "median_us": 115.8145,
+   "p99_us": 2125.79103,
+   "max_us": 3133.759,
+   "iters": 2000,
+   "gflops": 22.63481688389623,
+   "sub_ms": true
+  },
+  "tiny_b4_s16": {
+   "correct": true,
+   "max_abs_err": 1.1175338841557664e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=16,V=256,B=4",
+   "median_us": 110.7245,
+   "p99_us": 220.27995999999723,
+   "max_us": 3167.933,
+   "iters": 2000,
+   "gflops": 20.124037588790195,
+   "sub_ms": true
+  },
+  "tiny_b4_s32": {
+   "correct": true,
+   "max_abs_err": 1.8576467157860321e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=32,V=256,B=4",
+   "median_us": 183.63299999999998,
+   "p99_us": 257.91705,
+   "max_us": 2219.63,
+   "iters": 2000,
+   "gflops": 25.695773635457684,
+   "sub_ms": true
+  },
+  "tiny_b4_s64": {
+   "correct": true,
+   "max_abs_err": 1.705423897435665e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=64,V=256,B=4",
+   "median_us": 382.1875,
+   "p99_us": 4074.4144899999988,
+   "max_us": 4452.552,
+   "iters": 1000,
+   "gflops": 27.436166802943582,
+   "sub_ms": true
+  },
+  "tiny_b16_s16": {
+   "correct": true,
+   "max_abs_err": 1.7601390323029875e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=16,V=256,B=16",
+   "median_us": 352.95349999999996,
+   "p99_us": 2370.79809,
+   "max_us": 3465.206,
+   "iters": 1000,
+   "gflops": 25.252323606367412,
+   "sub_ms": true
+  },
+  "tiny_b16_s32": {
+   "correct": true,
+   "max_abs_err": 2.2820866338868484e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=32,V=256,B=16",
+   "median_us": 695.427,
+   "p99_us": 2707.2880999999998,
+   "max_us": 3711.025,
+   "iters": 1000,
+   "gflops": 27.14068910180364,
+   "sub_ms": true
+  },
+  "tiny_b16_s64": {
+   "correct": true,
+   "max_abs_err": 2.2820866338868484e-06,
+   "shape": "d=32,h=2,L=1,ff=64,S=64,V=256,B=16",
+   "median_us": 1507.3905,
+   "p99_us": 3445.5065199999985,
+   "max_us": 6543.145,
+   "iters": 500,
+   "gflops": 27.824933220688337,
+   "sub_ms": false
+  },
+  "default_b1_s16": {
+   "correct": true,
+   "max_abs_err": 1.1676213066968977e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=16,V=512,B=1",
+   "median_us": 164.3955,
+   "p99_us": 2132.44497,
+   "max_us": 4114.428,
+   "iters": 2000,
+   "gflops": 19.932419074731364,
+   "sub_ms": true
+  },
+  "default_b1_s32": {
+   "correct": true,
+   "max_abs_err": 1.1676213066968977e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=32,V=512,B=1",
+   "median_us": 249.2685,
+   "p99_us": 4295.4605,
+   "max_us": 6342.742,
+   "iters": 2000,
+   "gflops": 27.34298156405643,
+   "sub_ms": true
+  },
+  "default_b1_s64": {
+   "correct": true,
+   "max_abs_err": 1.368436994164668e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=64,V=512,B=1",
+   "median_us": 527.722,
+   "p99_us": 4752.196619999998,
+   "max_us": 8554.856,
+   "iters": 2000,
+   "gflops": 27.81779800728414,
+   "sub_ms": true
+  },
+  "default_b4_s16": {
+   "correct": true,
+   "max_abs_err": 1.7127630034252661e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=16,V=512,B=4",
+   "median_us": 471.3045,
+   "p99_us": 2491.0117800000003,
+   "max_us": 5613.359,
+   "iters": 2000,
+   "gflops": 27.810470725401515,
+   "sub_ms": true
+  },
+  "default_b4_s32": {
+   "correct": true,
+   "max_abs_err": 1.4666840640886747e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=32,V=512,B=4",
+   "median_us": 911.6215,
+   "p99_us": 2958.37862,
+   "max_us": 6018.25,
+   "iters": 2000,
+   "gflops": 29.906025691583622,
+   "sub_ms": true
+  },
+  "default_b4_s64": {
+   "correct": true,
+   "max_abs_err": 1.550716832388055e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=64,V=512,B=4",
+   "median_us": 1971.268,
+   "p99_us": 4947.967709999998,
+   "max_us": 7439.748,
+   "iters": 1000,
+   "gflops": 29.788063317620942,
+   "sub_ms": false
+  },
+  "default_b16_s16": {
+   "correct": true,
+   "max_abs_err": 1.7127630034252661e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=16,V=512,B=16",
+   "median_us": 1824.321,
+   "p99_us": 4259.509639999995,
+   "max_us": 6367.782,
+   "iters": 1000,
+   "gflops": 28.738801998113274,
+   "sub_ms": false
+  },
+  "default_b16_s32": {
+   "correct": true,
+   "max_abs_err": 1.6841537102685322e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=32,V=512,B=16",
+   "median_us": 3627.583,
+   "p99_us": 13683.215279999999,
+   "max_us": 21189.806,
+   "iters": 1000,
+   "gflops": 30.061863229593918,
+   "sub_ms": false
+  },
+  "default_b16_s64": {
+   "correct": true,
+   "max_abs_err": 1.7357967114772777e-06,
+   "shape": "d=64,h=4,L=2,ff=128,S=64,V=512,B=16",
+   "median_us": 8245.103,
+   "p99_us": 18120.904549999996,
+   "max_us": 21027.16,
+   "iters": 500,
+   "gflops": 28.487336543885508,
+   "sub_ms": false
+  }
+ },
+ "configs": {
+  "tiny": {
+   "peak_gemm_gflops": 69.93331256178065,
+   "cold": {
+    "cold_first_call_us": 215.816,
+    "steady_median_us": 32.283,
+    "cold_ratio": 6.685128395750085
+   },
+   "roofline_efficiency": 0.1642851842021765
+  },
+  "default": {
+   "peak_gemm_gflops": 71.61083807275271,
+   "cold": {
+    "cold_first_call_us": 676.208,
+    "steady_median_us": 244.56349999999998,
+    "cold_ratio": 2.7649587939328644
+   },
+   "roofline_efficiency": 0.38182742026112654
+  }
+ },
+ "fail_cells": [
+  "tiny_b16_s64:sub_ms",
+  "default_b4_s64:sub_ms",
+  "default_b16_s16:sub_ms",
+  "default_b16_s32:sub_ms",
+  "default_b16_s64:sub_ms"
+ ],
+ "b_general": true,
+ "sub_ms_all_cells": false
+}
