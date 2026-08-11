@@ -121,3 +121,48 @@ Next: thread sweep (2 cores), probe stage timings, opt8+ (attention/softmax micr
   vs naive 418/2173: 3.2x/3.0x. Sub-1000us margins: 7.6x (tiny), 1.4x (default).
 - Saturation: 8 consecutive attempts since opt12's last gain were losses or noise (opt13, sgemm,
   exp2, contiguity, thread sweep, orientation). Pure-numpy floor reached on this node.
+
+## 2026-08-11T04:21:37 — numpy-optimizer FINAL SUMMARY (signed: numpy-optimizer)
+
+### Champion
+numpy_opt12 — median-of-medians over 4 battery runs (iters=3000, warmup=300, bench-node-1):
+  TINY ~132us (131.2-133.3), DEFAULT ~714us (705.9-716.8). All correctness green (err<=2e-6 vs f64 ref),
+  B>1 falls back to numpy_vec, seq x batch sweep clean (evals v2 ready).
+  vs numpy_naive (418/2173): 3.2x / 3.0x. Margins under 1000us target: 7.6x / 1.4x.
+
+### What worked (positive data)
+1. Fused QKV single matmul + cached weight prep (opt2): 228/930 vs naive 418/2173.
+2. LN folded into downstream projections: ln(x)@P = (x-mu)@P * rstd (opt3/4).
+3. Stacked-matmul LN stats [h|h*h|1] @ Wstats -> [mean, E[x^2]+eps] in ONE gemv-ish call: 7.2us vs
+   25us for mean+mean reductions on the node (opt7): biggest single win (146/762).
+4. eps folded into stats weight -> rstd = (ex2 - mu*mu) ** -0.5 in 3 calls vs 5 (opt8).
+5. Softmax denominator via matmul-ones (1.9us) vs np.sum (3.2us) (opt8).
+6. ctx normalized by in-place divide (no reciprocal+mul) (opt10).
+7. Preallocated out= buffers everywhere; zero per-call allocations incl. take/ones/st/rstd (opt5,12).
+8. mask as additive constant (no np.where), no-max-subtraction softmax (safe: |att|<~13 << 87),
+   Q pre-scaled by 1/sqrt(dh), B=1 squeeze to 2D, np.take embed.
+
+### Negative data (8 failed attempts + why — gold for the repo)
+1. opt9 merged stats+QKV wide matmul [h|h*h|1]@W_ext(2d+1,3d+2) -> [qkv|mu|ex2] in one call:
+   LOSS 305/972 vs opt8 142/735. WHY: ~2x gemm flops + wide small-gemm slow path in OpenBLAS on
+   this node; non-contiguous qkv output slice adds reshape copies.
+2. opt13 transposed wide matmuls (P.T @ x.T -> (N,S)): LOSS 135/742 vs 131/711. WHY: isolated
+   gemm orientation micros won (qkv -12%, out -9%, w1 -10%) but the pipeline's .T view chains and
+   transposed-output slices (FFN into qkvT[:d]) cost more than the gemm gain.
+3. scipy.linalg.blas.sgemm with alpha/beta (fused residual matmul+add): SLOWER (6.5 vs 5.9us;
+   qkv 11.5 vs 8.1us). WHY: numpy 2.x small-matrix matmul dispatch beats fblas wrapper overhead.
+4. OPENBLAS_NUM_THREADS sweep (1 vs 2 on the 2-core node): mixed/no gain. tiny: 1T=142.5, 2T=237.5;
+   default: 1T=777.8, 2T=726.1. Unset (default) threads won overall. WHY: thread spawn overhead
+   dominates tiny gemms; node noise ~3-7% swamps the differences.
+5. einsum for attention/stats (att_einsum 47.6us vs att_matmul 4.05us; qkv einsum 49.6 vs 7.1):
+   5-10x slower on this numpy build. Never use einsum here.
+6. np.exp2 with pre-scaled att (log2e): 4.24us vs np.exp 1.91us. WHY: exp2 slower in this libm.
+7. Contiguous-copy attention operands (ascontiguousarray before batched matmul): micro faster by
+   ~0.1-0.2us but requires an extra copy call (~2us) -> net loss.
+8. pow with np.float32 scalar (2.03us) vs python float (1.73us); f32 literals don't help.
+
+### Where the time goes (opt12, stage profile on node)
+TINY: final_chain 46us, ffn 35us, qkv 20us, attn 20us, wo 7us, stats 14us, emb 3us (sum ~145).
+DEFAULT: final_chain 141us, ffn 69us, qkv 43us, attn 39us, wo 16us, stats 18us, emb 2us (sum ~328
+in isolation; full forward ~714 -> remainder is call overhead + noise). ~40 numpy calls/call at
+3-6us each: the floor is Python->C dispatch + small-gemm BLAS time on a 2-core Xeon.
