@@ -58,3 +58,17 @@ when they saturate, all numbers land in results/, graphs on localhost:9023.
 - fix (pre-node): mm_blocked restructured for perfect nesting (collapse(2) validity); wrapper now
   builds separate wq/wk/wv blocks for the unfused v1/v2 path (was pointing at wo -> wrong weights).
   Local clang syntax checks pass for all 5 build configs. Waiting on provisioner for bench-node-2.
+
+## FIRST NODE RUN (bench-node-2, attempt 01, gcc 11.4, 2 cores) — ground-up-c
+- Build OK after fixing missing <stdint.h> in ft.h (gcc 11; clang local check missed it).
+- CORRECTNESS: all C impls FAILED max_abs_err 3.5-5.3 (numpy_vec passes 7e-7). Root cause:
+  attention kernels treated Q/K/V as contiguous (n,d) blocks but they are STRIDED views into
+  the qkv buffer (fused: [Q|K|V] interleaved rows stride 3d; naive: 3 contiguous blocks stride d).
+  FIXED: attn_fused/attn_naive now take base pointers + row stride.
+- Also reworked ffn_fused w2 pass to outer-product form (w2 rows contiguous; old column loop
+  had 256B-stride access — suspected cause of v3>v2 on default).
+- Latency (still buggy build, 3000 iters/300 warmup): tiny median_us v1=151.1 v2=121.2 v3=113.5
+  v4=104.0 v5=109.4 (numpy_vec=430.0). default: v1=2297 v2=1715 v3=2047 v4=1287 v5=1246
+  (numpy_vec=1992). All C variants sub-ms on TINY.
+- eval_v3 numpy_vec baseline: tiny steady 429.8us / default 1999.9us, allocs 19-20, peak 0.12-0.53MB.
+- Node died after run (~30 min lifetime); results JSONs lost with VM. Re-running on next node.

@@ -10,6 +10,7 @@
 #define FT_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
     /* embedding: (vocab, d_model) */

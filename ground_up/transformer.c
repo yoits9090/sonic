@@ -85,22 +85,22 @@ static void layernorm(const float *restrict x, float *restrict y,
 static void attn_fused(const float *restrict Q, const float *restrict K,
                        const float *restrict V, float *restrict ctx,
                        int B, int S, int H, int dh, float inv,
-                       float *restrict scores) {
+                       float *restrict scores, int stride) {
     int d = H * dh;
     for (int b = 0; b < B; b++) {
         for (int h = 0; h < H; h++) {
             for (int s = 0; s < S; s++) {
-                const float *q = Q + ((size_t)b * S + s) * d + h * dh;
+                const float *q = Q + ((size_t)b * S + s) * stride + h * dh;
                 /* score for k=0 seeds the running max (keeps everything
                  * finite under -ffast-math, no -INFINITY needed) */
-                const float *k0 = K + ((size_t)b * S) * d + h * dh;
+                const float *k0 = K + ((size_t)b * S) * stride + h * dh;
                 float acc0 = 0.0f;
                 for (int j = 0; j < dh; j++) acc0 += q[j] * k0[j];
                 acc0 *= inv;
                 scores[0] = acc0;
                 float m = acc0;
                 for (int k = 1; k <= s; k++) {
-                    const float *kk = K + ((size_t)b * S + k) * d + h * dh;
+                    const float *kk = K + ((size_t)b * S + k) * stride + h * dh;
                     float acc = 0.0f;
                     for (int j = 0; j < dh; j++) acc += q[j] * kk[j];
                     acc *= inv;
@@ -118,7 +118,7 @@ static void attn_fused(const float *restrict Q, const float *restrict K,
                 for (int j = 0; j < dh; j++) o[j] = 0.0f;
                 for (int k = 0; k <= s; k++) {
                     float p = scores[k] * r;
-                    const float *vv = V + ((size_t)b * S + k) * d + h * dh;
+                    const float *vv = V + ((size_t)b * S + k) * stride + h * dh;
                     for (int j = 0; j < dh; j++) o[j] += p * vv[j];
                 }
             }
@@ -133,7 +133,7 @@ static void attn_fused(const float *restrict Q, const float *restrict K,
 static void attn_naive(const float *restrict Q, const float *restrict K,
                        const float *restrict V, float *restrict ctx,
                        int B, int S, int H, int dh, float inv,
-                       float *restrict scratch) {
+                       float *restrict scratch, int stride) {
     int d = H * dh;
     float *kc = scratch;            /* S x dh contiguous K copy  */
     float *vc = kc + (size_t)S * dh;/* S x dh contiguous V copy  */
@@ -142,13 +142,13 @@ static void attn_naive(const float *restrict Q, const float *restrict K,
     for (int b = 0; b < B; b++) {
         for (int h = 0; h < H; h++) {
             for (int k = 0; k < S; k++) {
-                const float *src = K + ((size_t)b * S + k) * d + h * dh;
+                const float *src = K + ((size_t)b * S + k) * stride + h * dh;
                 memcpy(kc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
-                src = V + ((size_t)b * S + k) * d + h * dh;
+                src = V + ((size_t)b * S + k) * stride + h * dh;
                 memcpy(vc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
             }
             for (int s = 0; s < S; s++) {
-                const float *q = Q + ((size_t)b * S + s) * d + h * dh;
+                const float *q = Q + ((size_t)b * S + s) * stride + h * dh;
                 float *a = att + (size_t)s * S;
                 for (int k = 0; k < S; k++) {
                     const float *kk = kc + (size_t)k * dh;
@@ -191,13 +191,13 @@ static void ffn_fused(const float *restrict X, const float *restrict w1,
         }
         /* relu in registers */
         for (int j = 0; j < dff; j++) u[j] = u[j] > 0.0f ? u[j] : 0.0f;
-        /* h += u @ w2 */
+        /* h += u @ w2, outer-product form: for each j, the d-wide row of w2
+         * is contiguous, so both w2 and h stream with unit stride */
         float *hi = Hout + (size_t)i * d;
-        for (int jj = 0; jj < d; jj++) {
-            float s = 0.0f;
-            const float *w2j = w2 + (size_t)jj; /* column jj of w2 (row-major) */
-            for (int j = 0; j < dff; j++) s += u[j] * w2j[(size_t)j * d];
-            hi[jj] += s;
+        for (int j = 0; j < dff; j++) {
+            float uj = u[j];
+            const float *w2j = w2 + (size_t)j * d;
+            for (int jj = 0; jj < d; jj++) hi[jj] += uj * w2j[jj];
         }
     }
 }
@@ -247,7 +247,7 @@ int ft_forward(const ft_weights *W, const long long *x, int B, int S,
 #if FT_FUSED
         layernorm(h, h2, W->ln1g + (size_t)i * d, W->ln1b + (size_t)i * d, W->eps, (int)n, d);
         ft_mm(h2, W->wqkv + (size_t)i * d * 3 * d, qkv, (int)n, 3 * d, d, 0);
-        attn_fused(qkv, qkv + n * d, qkv + 2 * n * d, ctx, B, S, H, dh, inv, scores);
+        attn_fused(qkv, qkv + d, qkv + 2 * d, ctx, B, S, H, dh, inv, scores, 3 * d);
         ft_mm(ctx, W->wo + (size_t)i * d * d, h, (int)n, d, d, 1);
         layernorm(h, h2, W->ln2g + (size_t)i * d, W->ln2b + (size_t)i * d, W->eps, (int)n, d);
         ffn_fused(h2, W->w1 + (size_t)i * d * dff, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, urow);
@@ -256,7 +256,7 @@ int ft_forward(const ft_weights *W, const long long *x, int B, int S,
         ft_mm(h2, W->wq + (size_t)i * d * d, qkv, (int)n, d, d, 0);
         ft_mm(h2, W->wk + (size_t)i * d * d, qkv + n * d, (int)n, d, d, 0);
         ft_mm(h2, W->wv + (size_t)i * d * d, qkv + 2 * n * d, (int)n, d, d, 0);
-        attn_naive(qkv, qkv + n * d, qkv + 2 * n * d, ctx, B, S, H, dh, inv, attnsc);
+        attn_naive(qkv, qkv + n * d, qkv + 2 * n * d, ctx, B, S, H, dh, inv, attnsc, d);
         ft_mm(ctx, W->wo + (size_t)i * d * d, h, (int)n, d, d, 1);
         layernorm(h, h2, W->ln2g + (size_t)i * d, W->ln2b + (size_t)i * d, W->eps, (int)n, d);
         ft_mm(h2, W->w1 + (size_t)i * d * dff, ffnbuf, (int)n, dff, d, 0);
