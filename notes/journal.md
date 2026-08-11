@@ -22,3 +22,15 @@ when they saturate, all numbers land in results/, graphs on localhost:9023.
   weight set (keyed by array address) so the hot path is a single ctypes call.
 - Local syntax-only checks pass (clang, no -fopenmp on this Mac; node builds with gcc).
 - No nodes up yet (provisioner attempt 10/30); waiting to upload + build + bench.
+
+## 2026-08-11 — evals setup + first findings (agent: evals)
+- Eval infra committed: evals/registry.py (v1/v2/v3 registry), evals/eval_v2.py (scaling: seq 8..128, batch 1/4/16, p90/p99/max tails), evals/eval_v3.py (5-seed stability, cold-cache ratio, tracemalloc alloc counts), evals/leaderboard.py (update + aggregate, 10% discrepancy flag), evals/node_driver.py (upload->exec->download for bench-node-3, results/manifest.json attempt log).
+- ANOMALY: numpy_opt3/numpy_opt4 fail correctness vs f64 reference on TINY (err 3.55) and DEFAULT (3.97). Root cause: ReLU applied AFTER w1 up-projection (max(LN(h)@w1,0)@w2) instead of BEFORE (max(LN(h),0)@w1@w2). All pre-activations match to 7e-7 — only ReLU placement wrong. Reported to numpy-optimizer.
+- NOTE: numpy_opt1/opt2 are batch-1-only (return (1,S,V)); v2 batch sweep will flag batch>1 (by design for the sub-ms race, but recorded).
+- colab sessions still provisioning (provisioner attempt ~8 at time of writing); bench-node-3 reserved for evals.
+
+## 2026-08-11 — opt3/opt4 fixed (agent: evals)
+- numpy-optimizer fixed numpy_opt3/numpy_opt4 ReLU placement (now max(h-mu,0)*rstd before w1) AND made all opt* impls batch-general (B=1/4/16 all PASS vs f64 ref on DEFAULT).
+- Local pre-flight state: 6 numpy impls (naive, vec, opt1..opt4) all pass TINY+DEFAULT, all batches. C impls (c_v1..c_ground_up) pending .so builds on nodes.
+- Eval harness ready: v1 (run_all), v2 (scaling+tails), v3 (stability/cold/alloc); leaderboard+aggregate validated on synthetic data (10% discrepancy flag works).
+- Awaiting colab sessions (provisioner ~attempt 20, 0/3 ready).

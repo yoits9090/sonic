@@ -18,6 +18,7 @@ RUNNERS = {
     "v2": ("evals/eval_v2.py", ["--node", "{node}", "--attempt", "{attempt}"]),
     "v3": ("evals/eval_v3.py", ["--node", "{node}", "--attempt", "{attempt}"]),
 }
+ALL_SEQ = ["v1", "v2", "v3"]
 SUMMARY_FILES = {
     "v1": ["results/{node}_evals.json"],
     "v2": ["results/evals_v2_{node}.json", "results/evals_v2_{node}_{impl}_a{attempt}.json"],
@@ -42,19 +43,21 @@ def next_attempt(node, gen):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--node", required=True)
-    ap.add_argument("--gen", required=True, choices=sorted(RUNNERS))
+    ap.add_argument("--gen", required=True, choices=sorted(RUNNERS) + ["all"])
     ap.add_argument("--attempt", type=int, default=None)
     ap.add_argument("--impl", default=None)
     ap.add_argument("--timeout", type=float, default=1200)
     a = ap.parse_args()
-    node, gen = a.node, a.gen
-    attempt = a.attempt if a.attempt else next_attempt(node, gen)
-    script, tmpl_args = RUNNERS[gen]
-    args = [t.format(node=node, attempt=attempt, impl=a.impl or "*") for t in tmpl_args]
-    if a.impl:
-        args += ["--impl", a.impl]
-    if gen == "v1" and "--iters" not in args:
-        pass  # run_all.py hardcodes 3000 iters
+    node = a.node
+    gens = ALL_SEQ if a.gen == "all" else [a.gen]
+    attempt = a.attempt if a.attempt else max(next_attempt(node, g) for g in gens)
+    runs = []
+    for g in gens:
+        script, tmpl_args = RUNNERS[g]
+        args = [t.format(node=node, attempt=attempt, impl=a.impl or "*") for t in tmpl_args]
+        if a.impl:
+            args += ["--impl", a.impl]
+        runs.append((script, args))
 
     # 1. upload
     for f in UPLOAD_FILES:
@@ -62,11 +65,12 @@ def main():
         print(f"[driver] upload {f} -> {remote}")
         sh(["colab", "--auth", "adc", "upload", "-s", node, "-f", os.path.join(ROOT, f), remote], timeout=180)
     # 2. exec via stdin runpy (keeps __file__ based paths correct on the node)
-    runner = (f"import runpy, sys\n"
-              f"sys.path.insert(0, '{REMOTE_BASE}')\n"
-              f"sys.argv = ['{script}'] + {args!r}\n"
-              f"runpy.run_path('{REMOTE_BASE}/{script}', run_name='__main__')\n")
-    print(f"[driver] exec {script} args={args} timeout={a.timeout}")
+    lines = ["import runpy, sys", f"sys.path.insert(0, '{REMOTE_BASE}')"]
+    for script, args in runs:
+        lines.append(f"sys.argv = ['{script}'] + {args!r}")
+        lines.append(f"runpy.run_path('{REMOTE_BASE}/{script}', run_name='__main__')")
+    runner = "\n".join(lines) + "\n"
+    print(f"[driver] exec {gens} timeout={a.timeout}")
     r = subprocess.run(["colab", "--auth", "adc", "exec", "-s", node, "--timeout", str(a.timeout)],
                        input=runner, capture_output=True, text=True, timeout=a.timeout + 120)
     out = (r.stdout or "") + (r.stderr or "")
@@ -76,36 +80,40 @@ def main():
     # 3. download
     os.makedirs(os.path.join(ROOT, "results"), exist_ok=True)
     downloaded = []
-    for pat in SUMMARY_FILES[gen]:
-        fname = pat.format(node=node, attempt=attempt, impl=a.impl or "*")
-        if "*" in fname and gen != "v1":
-            continue  # per-impl files handled below
-        remote = f"{REMOTE_BASE}/{fname}"
-        local = os.path.join(ROOT, "results", os.path.basename(fname))
-        try:
-            sh(["colab", "--auth", "adc", "download", "-s", node, "-f", remote, local], timeout=180)
-            downloaded.append(os.path.basename(fname))
-        except RuntimeError as e:
-            print(f"[driver] download warn: {e}")
-    if a.impl is None and gen in ("v2", "v3"):
-        # per-impl files: guess from summary json
-        sum_local = os.path.join(ROOT, "results", os.path.basename(SUMMARY_FILES[gen][0].format(node=node, attempt=attempt)))
-        if os.path.exists(sum_local):
-            data = json.load(open(sum_local))
-            for impl in data.get("impls", {}):
-                fname = SUMMARY_FILES[gen][1].format(node=node, attempt=attempt, impl=impl)
-                remote = f"{REMOTE_BASE}/{fname}"
-                local = os.path.join(ROOT, "results", os.path.basename(fname))
-                try:
-                    sh(["colab", "--auth", "adc", "download", "-s", node, "-f", remote, local], timeout=180)
-                    downloaded.append(os.path.basename(fname))
-                except RuntimeError as e:
-                    print(f"[driver] download warn: {e}")
+    for gen in gens:
+        for pat in SUMMARY_FILES[gen]:
+            fname = pat.format(node=node, attempt=attempt, impl=a.impl or "*")
+            if "*" in fname:
+                continue  # per-impl files handled below
+            remote = f"{REMOTE_BASE}/{fname}"
+            local = os.path.join(ROOT, "results", os.path.basename(fname))
+            try:
+                sh(["colab", "--auth", "adc", "download", "-s", node, "-f", remote, local], timeout=180)
+                downloaded.append(os.path.basename(fname))
+            except RuntimeError as e:
+                print(f"[driver] download warn: {e}")
+    if a.impl is None:
+        for gen in gens:
+            if gen not in ("v2", "v3"):
+                continue
+            sum_local = os.path.join(ROOT, "results", os.path.basename(SUMMARY_FILES[gen][0].format(node=node, attempt=attempt)))
+            if os.path.exists(sum_local):
+                data = json.load(open(sum_local))
+                for impl in data.get("impls", {}):
+                    fname = SUMMARY_FILES[gen][1].format(node=node, attempt=attempt, impl=impl)
+                    remote = f"{REMOTE_BASE}/{fname}"
+                    local = os.path.join(ROOT, "results", os.path.basename(fname))
+                    try:
+                        sh(["colab", "--auth", "adc", "download", "-s", node, "-f", remote, local], timeout=180)
+                        downloaded.append(os.path.basename(fname))
+                    except RuntimeError as e:
+                        print(f"[driver] download warn: {e}")
     # 4. manifest
     man_path = os.path.join(ROOT, "results", "manifest.json")
     man = json.load(open(man_path)) if os.path.exists(man_path) else {"runs": []}
-    man["runs"].append({"ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "node": node, "gen": gen,
-                        "attempt": attempt, "impl": a.impl, "files": downloaded})
+    for g in gens:
+        man["runs"].append({"ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "node": node, "gen": g,
+                            "attempt": attempt, "impl": a.impl, "files": downloaded})
     json.dump(man, open(man_path, "w"), indent=1)
     print(f"[driver] DONE attempt {attempt} files: {downloaded}")
 

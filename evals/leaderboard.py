@@ -30,7 +30,7 @@ def extract_records(path, d):
     """Yield (impl, cfg_key, median_us, node, ts) records from a results file."""
     ts = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(os.path.getmtime(path)))
     # v1: {impl: {"correctness": ..., "latency": {...cfg:..., median_us...}}}
-    if isinstance(d, dict) and "latency" in str(d.keys()) and any(isinstance(d.get(k), dict) and "latency" in d[k] for k in d):
+    if isinstance(d, dict) and any(isinstance(d.get(k), dict) and "latency" in d[k] for k in d):
         for impl, v in d.items():
             lat = v.get("latency")
             if not isinstance(lat, dict) or "median_us" not in lat:
@@ -44,26 +44,34 @@ def extract_records(path, d):
         node = d.get("node", "?")
         for impl, v in d["impls"].items():
             if isinstance(v, dict) and "seq_sweep" in v:  # v2
-                base = {"seq_len": None, "batch": 1, "gen": "v2"}
+                base = {"batch": 1}
                 for sl, r in v["seq_sweep"].items():
                     yield impl, cfg_key({**base, "seq_len": int(sl)}), r["median_us"], node, ts
                 for b, r in v["batch_sweep"].items():
-                    yield impl, cfg_key({**base, "seq_len": 32, "batch": int(b)}), r["median_us"], node, ts
+                    yield impl, cfg_key({"batch": int(b), "seq_len": 32}), r["median_us"], node, ts
             elif isinstance(v, dict) and "configs" in v:  # v3 latency seeds
                 for cname, r in v["configs"].items():
                     ls = r.get("latency_seeds")
                     if ls:
-                        yield impl, cfg_key({"gen": "v3", "cfg": cname, "metric": "latency_seeds"}), ls["median_of_medians_us"], node, ts
+                        yield impl, cfg_key({"v3_name": cname}), ls["median_of_medians_us"], node, ts
 
 
 def cfg_key(cfg):
+    """Canonical key: transformer shape + batch. v3 entries resolved by config name."""
     if not cfg:
         return "default?"
-    parts = []
-    for k in ("d_model", "n_heads", "n_layers", "d_ff", "seq_len", "batch", "vocab", "cfg", "gen", "metric"):
-        if k in cfg and cfg[k] is not None:
-            parts.append(f"{k}={cfg[k]}")
-    return ",".join(parts) or json.dumps(cfg, sort_keys=True)
+    if "shape" in cfg:
+        return cfg["shape"]
+    if "v3_name" in cfg:
+        from src.config import TINY, DEFAULT
+        c = TINY if cfg["v3_name"] == "tiny" else DEFAULT
+        cfg = {"d_model": c.d_model, "n_heads": c.n_heads, "n_layers": c.n_layers,
+               "d_ff": c.d_ff, "seq_len": c.seq_len, "vocab": c.vocab, "batch": 1}
+    batch = cfg.get("batch", 1)
+    if batch is None:
+        batch = 1
+    return (f"d={cfg.get('d_model','?')},h={cfg.get('n_heads','?')},L={cfg.get('n_layers','?')},"
+            f"ff={cfg.get('d_ff','?')},S={cfg.get('seq_len','?')},V={cfg.get('vocab','?')},B={batch}")
 
 
 def update():

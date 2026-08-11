@@ -80,8 +80,9 @@ def run_impl(name, node, attempt, out_dir, smoke=False):
         abs_err = float(np.abs(out - ref).max())
         it = 8 if smoke else iters_for(1, sl)
         t = bench(fn, W32, x, cfg, it, warmup=2 if smoke else 50)
+        shape = f"d={cfg.d_model},h={cfg.n_heads},L={cfg.n_layers},ff={cfg.d_ff},S={sl},V={cfg.vocab},B=1"
         impl_res["seq_sweep"][str(sl)] = {
-            "correct": bool(abs_err < ABS_TOL), "max_abs_err": abs_err,
+            "shape": shape, "correct": bool(abs_err < ABS_TOL), "max_abs_err": abs_err,
             "iters": it, "median_us": float(np.median(t)), "mean_us": float(t.mean()),
             "p90_us": float(np.percentile(t, 90)), "p99_us": float(np.percentile(t, 99)),
             "max_us": float(t.max()), "min_us": float(t.min()),
@@ -98,8 +99,9 @@ def run_impl(name, node, attempt, out_dir, smoke=False):
         abs_err = float(np.abs(out - ref).max())
         it = 8 if smoke else iters_for(b, cfg.seq_len)
         t = bench(fn, W32, x, cfg, it, warmup=2 if smoke else 50)
+        shape = f"d={cfg.d_model},h={cfg.n_heads},L={cfg.n_layers},ff={cfg.d_ff},S={cfg.seq_len},V={cfg.vocab},B={b}"
         impl_res["batch_sweep"][str(b)] = {
-            "correct": bool(abs_err < ABS_TOL), "max_abs_err": abs_err,
+            "shape": shape, "correct": bool(abs_err < ABS_TOL), "max_abs_err": abs_err,
             "iters": it, "median_us": float(np.median(t)), "mean_us": float(t.mean()),
             "p90_us": float(np.percentile(t, 90)), "p99_us": float(np.percentile(t, 99)),
             "max_us": float(t.max()), "min_us": float(t.min()),
