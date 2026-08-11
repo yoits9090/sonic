@@ -10,19 +10,23 @@ REMOTE_BASE = "/content/ft_evals3"
 UPLOAD_FILES = [
     "src/config.py", "src/random_state.py", "src/impls.py",
     "evals/run_all.py", "evals/eval_correctness.py", "evals/eval_latency.py",
-    "evals/eval_v2.py", "evals/eval_v3.py", "evals/registry.py",
+    "evals/eval_v2.py", "evals/eval_v3.py", "evals/eval_v4.py", "evals/eval_v5.py", "evals/registry.py",
 ]
 
 RUNNERS = {
     "v1": ("evals/run_all.py", ["--node", "{node}"]),
     "v2": ("evals/eval_v2.py", ["--node", "{node}", "--attempt", "{attempt}"]),
     "v3": ("evals/eval_v3.py", ["--node", "{node}", "--attempt", "{attempt}"]),
+    "v4": ("evals/eval_v4.py", ["--node", "{node}", "--attempt", "{attempt}"]),
+    "v5": ("evals/eval_v5.py", ["--node", "{node}", "--attempt", "{attempt}"]),
 }
-ALL_SEQ = ["v1", "v2", "v3"]
+ALL_SEQ = ["v1", "v2", "v3", "v4", "v5"]
 SUMMARY_FILES = {
     "v1": ["results/{node}_evals.json"],
     "v2": ["results/evals_v2_{node}.json", "results/evals_v2_{node}_{impl}_a{attempt}.json"],
     "v3": ["results/evals_v3_{node}.json", "results/evals_v3_{node}_{impl}_a{attempt}.json"],
+    "v4": ["results/evals_v4_{node}.json", "results/evals_v4_{node}_{impl}_a{attempt}.json"],
+    "v5": ["results/evals_v5_{node}.json", "results/evals_v5_{node}_{impl}_a{attempt}.json"],
 }
 
 

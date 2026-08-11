@@ -38,6 +38,25 @@ REGISTRY = {
             "alloc": "tracemalloc allocation count + peak bytes per forward pass",
         },
     },
+    "v4": {
+        "script": "evals/eval_v4.py",
+        "args": ["--node", "{node}", "--attempt", "{attempt}"],
+        "summary": "results/evals_v4_{node}.json",
+        "per_impl": "results/evals_v4_{node}_{impl}_a{attempt}.json",
+        "criteria": {
+            "edge_seq": "seq_len in [1,2,16,32,64,256] (incl d_head/d_model edges, S>d_model) abs_err < 1e-3",
+            "distributions": "uniform/skewed/same/edges/bursty token inputs abs_err < 1e-3",
+        },
+    },
+    "v5": {
+        "script": "evals/eval_v5.py",
+        "args": ["--node", "{node}", "--attempt", "{attempt}"],
+        "summary": "results/evals_v5_{node}.json",
+        "per_impl": "results/evals_v5_{node}_{impl}_a{attempt}.json",
+        "criteria": {
+            "headroom": "theoretical FLOPs, achieved GF/s, pure-matmul ceiling, overhead x, headroom %",
+        },
+    },
 }
 
 
