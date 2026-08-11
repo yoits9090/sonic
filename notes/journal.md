@@ -113,3 +113,11 @@ Next: thread sweep (2 cores), probe stage timings, opt8+ (attention/softmax micr
 - Saturation: last 6 attempts gained <=7%; remaining hotspots are the big matmuls themselves
   (out 1M flops, w1/w2 0.5M) + ~40 numpy calls; pure-numpy floor approx. Next axis if parent wants:
   sub-agent for thread/OS-level tuning or accept numpy_opt12 as the numpy champion.
+
+## 2026-08-11T04:21:00 — numpy-optimizer: final champion + saturation (bench-node-1)
+- opt13 (transposed wide matmuls): LOSS in full pipeline (tiny 135.1 vs 131.3, default 742.4 vs 710.7)
+  despite winning isolated micros (qkv -12%, out -9%) — .T view chains cost more than the gemm gain. Dropped.
+- opt12 median-of-medians across a1-a4: TINY ~132us (131.2-133.3), DEFAULT ~714us (705.9-716.8).
+  vs naive 418/2173: 3.2x/3.0x. Sub-1000us margins: 7.6x (tiny), 1.4x (default).
+- Saturation: 8 consecutive attempts since opt12's last gain were losses or noise (opt13, sgemm,
+  exp2, contiguity, thread sweep, orientation). Pure-numpy floor reached on this node.

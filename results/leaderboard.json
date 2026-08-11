@@ -1,18 +1,18 @@
 {
- "updated_ts": "2026-08-11T04:17:21-0400",
+ "updated_ts": "2026-08-11T04:18:28-0400",
  "impls": {
   "numpy_naive": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 424.814,
-    "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "median_us": 418.1915,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_naive_tiny_a1.json",
+    "ts": "2026-08-11T08:05:13"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
-    "median_us": 2216.4165000000003,
-    "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "median_us": 2172.49,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_naive_default_a1.json",
+    "ts": "2026-08-11T08:05:13"
    },
    "d=?,h=?,L=?,ff=?,S=128,V=?,B=1": {
     "median_us": 8653.7205,
@@ -59,10 +59,10 @@
   },
   "numpy_opt1": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 284.345,
-    "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "median_us": 278.62850000000003,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt1_tiny_a1.json",
+    "ts": "2026-08-11T08:05:13"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
     "median_us": 1552.2635,
@@ -113,12 +113,54 @@
     "ts": "2026-08-11T08:15:25"
    }
   },
+  "numpy_opt10": {
+   "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
+    "median_us": 140.14749999999998,
+    "node": "bench-node-3",
+    "source": "bench-node-3_evals.json",
+    "ts": "2026-08-11T08:17:41"
+   },
+   "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
+    "median_us": 722.0174999999999,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt10_default_a2.json",
+    "ts": "2026-08-11T08:12:15"
+   }
+  },
+  "numpy_opt11": {
+   "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
+    "median_us": 237.29500000000002,
+    "node": "bench-node-3",
+    "source": "bench-node-3_evals.json",
+    "ts": "2026-08-11T08:17:41"
+   },
+   "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
+    "median_us": 731.3715,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt11_default_a2.json",
+    "ts": "2026-08-11T08:15:20"
+   }
+  },
+  "numpy_opt12": {
+   "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
+    "median_us": 131.31799999999998,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt12_tiny_a2.json",
+    "ts": "2026-08-11T08:16:16"
+   },
+   "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
+    "median_us": 716.8145,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt12_default_a2.json",
+    "ts": "2026-08-11T08:16:16"
+   }
+  },
   "numpy_opt2": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 230.32,
-    "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "median_us": 227.5235,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt2_tiny_a1.json",
+    "ts": "2026-08-11T08:05:13"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
     "median_us": 929.0225,
@@ -171,10 +213,10 @@
   },
   "numpy_opt3": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 226.35500000000002,
+    "median_us": 208.397,
     "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "source": "bench-node-3_evals.json",
+    "ts": "2026-08-11T08:17:41"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
     "median_us": 895.7684999999999,
@@ -227,10 +269,10 @@
   },
   "numpy_opt4": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 341.52700000000004,
+    "median_us": 208.0505,
     "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "source": "bench-node-3_evals.json",
+    "ts": "2026-08-11T08:17:41"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
     "median_us": 892.715,
@@ -283,10 +325,10 @@
   },
   "numpy_opt5": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 214.179,
+    "median_us": 209.12,
     "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "source": "bench-node-3_evals.json",
+    "ts": "2026-08-11T08:17:41"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
     "median_us": 895.463,
@@ -339,16 +381,16 @@
   },
   "numpy_opt6": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 223.0265,
+    "median_us": 212.538,
     "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "source": "bench-node-3_evals.json",
+    "ts": "2026-08-11T08:17:41"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
-    "median_us": 946.3245,
-    "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "median_us": 912.1925,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt6_default_a1.json",
+    "ts": "2026-08-11T08:05:13"
    },
    "d=?,h=?,L=?,ff=?,S=128,V=?,B=1": {
     "median_us": 2398.9685,
@@ -395,10 +437,10 @@
   },
   "numpy_opt7": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 152.2145,
-    "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "median_us": 145.875,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt7_tiny_a1.json",
+    "ts": "2026-08-11T08:05:13"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
     "median_us": 759.392,
@@ -449,18 +491,40 @@
     "ts": "2026-08-11T08:15:25"
    }
   },
-  "numpy_vec": {
+  "numpy_opt8": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
-    "median_us": 431.998,
+    "median_us": 141.027,
     "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "source": "bench-node-3_evals.json",
+    "ts": "2026-08-11T08:17:41"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
-    "median_us": 2041.4160000000002,
+    "median_us": 731.8315,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_opt8_default_a2.json",
+    "ts": "2026-08-11T08:12:15"
+   }
+  },
+  "numpy_opt9": {
+   "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
+    "median_us": 173.77550000000002,
     "node": "bench-node-3",
-    "source": "evals_v3_bench-node-3.json",
-    "ts": "2026-08-11T08:15:25"
+    "source": "bench-node-3_evals.json",
+    "ts": "2026-08-11T08:17:41"
+   }
+  },
+  "numpy_vec": {
+   "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
+    "median_us": 422.765,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_vec_tiny_a1.json",
+    "ts": "2026-08-11T08:05:13"
+   },
+   "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
+    "median_us": 1983.4445,
+    "node": "bench-node-1",
+    "source": "bench-node-1_numpy_vec_default_a1.json",
+    "ts": "2026-08-11T08:05:13"
    },
    "d=?,h=?,L=?,ff=?,S=128,V=?,B=1": {
     "median_us": 8296.0365,

@@ -1,0 +1,21 @@
+{
+ "impl": "numpy_vec",
+ "cfg": "default",
+ "node": "bench-node-1",
+ "iters": 3000,
+ "numpy_version": "2.0.2",
+ "median_us": 2007.435,
+ "mean_us": 2950.8499443333335,
+ "p90_us": 5186.979899999994,
+ "p99_us": 12000.27605,
+ "min_us": 1871.525,
+ "throughput_tok_s": 15940.740297942399,
+ "sub_ms": false,
+ "correctness": {
+  "impl": "numpy_vec",
+  "cfg": "default",
+  "node": "bench-node-1",
+  "max_abs_err": 1.0214403300956576e-06,
+  "pass": true
+ }
+}
