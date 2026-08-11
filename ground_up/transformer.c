@@ -35,6 +35,10 @@
 #include <string.h>
 #include "ft.h"
 
+#if defined(FT_OPENMP)
+#include <omp.h>
+#endif
+
 /* ft_mm from matmul.c */
 void ft_mm(const float *A, const float *B, float *C,
            int M, int N, int K, int acc);
@@ -42,6 +46,28 @@ void ft_mm(const float *A, const float *B, float *C,
 #if !defined(FT_FUSED)
 #define FT_FUSED 1
 #endif
+
+#if !defined(FT_FASTEXP)
+#define FT_FASTEXP 0
+#endif
+
+#if !defined(FT_FFN_MM)
+#define FT_FFN_MM 0
+#endif
+
+/* exp(x) for x <= 0, ~3e-9 relative error (Chebyshev-node LS fit of 2^f on
+ * [0,1), degree 6), ~3-4x faster than glibc expf.
+ * exp(x) = 2^(x*log2e): split into int part (ldexp) + poly for 2^f. */
+static inline float fast_exp(float x) {
+    float t = x * 1.4426950408889634f;
+    float n = floorf(t);
+    float f = t - n;
+    float p = 1.0000000025791764f + f * (0.6931469288712638f + f * (0.24023050092090045f
+              + f * (0.055480429145105356f + f * (0.009684577477983502f
+              + f * (0.0012387831477474515f + f * 0.0002187751645542967f)))));
+    return ldexpf(p, (int)n);
+}
+#define EXP(x) (FT_FASTEXP ? fast_exp(x) : expf(x))
 
 /* FT_PROFILE: per-stage timing (debug builds only). */
 #if defined(FT_PROFILE)
@@ -122,8 +148,16 @@ static void attn_fused(const float *restrict Q, const float *restrict K,
                        int B, int S, int H, int dh, float inv,
                        float *restrict scores, int stride) {
     int d = H * dh;
+#if defined(FT_OPENMP)
+#pragma omp parallel for schedule(static) collapse(2) if ((long)B * H * S * S >= 2048)
+#endif
     for (int b = 0; b < B; b++) {
         for (int h = 0; h < H; h++) {
+#if defined(FT_OPENMP)
+            float *sc = scores + (size_t)omp_get_thread_num() * S; /* thread-private */
+#else
+            float *sc = scores;
+#endif
             for (int s = 0; s < S; s++) {
                 const float *q = Q + ((size_t)b * S + s) * stride + h * dh;
                 /* score for k=0 seeds the running max (keeps everything
@@ -131,26 +165,26 @@ static void attn_fused(const float *restrict Q, const float *restrict K,
                 const float *k0 = K + ((size_t)b * S) * stride + h * dh;
                 float acc0 = (dh == 16) ? dot16(q, k0) : _dot_generic(q, k0, dh);
                 acc0 *= inv;
-                scores[0] = acc0;
+                sc[0] = acc0;
                 float m = acc0;
                 for (int k = 1; k <= s; k++) {
                     const float *kk = K + ((size_t)b * S + k) * stride + h * dh;
                     float acc = (dh == 16) ? dot16(q, kk) : _dot_generic(q, kk, dh);
                     acc *= inv;
-                    scores[k] = acc;
+                    sc[k] = acc;
                     if (acc > m) m = acc;
                 }
                 float sum = 0.0f;
                 for (int k = 0; k <= s; k++) {
-                    float e = expf(scores[k] - m);
-                    scores[k] = e;
+                    float e = EXP(sc[k] - m);
+                    sc[k] = e;
                     sum += e;
                 }
                 float r = 1.0f / sum;
                 float *o = ctx + ((size_t)b * S + s) * d + h * dh;
                 for (int j = 0; j < dh; j++) o[j] = 0.0f;
                 for (int k = 0; k <= s; k++) {
-                    float p = scores[k] * r;
+                    float p = sc[k] * r;
                     const float *vv = V + ((size_t)b * S + k) * stride + h * dh;
                     for (int j = 0; j < dh; j++) o[j] += p * vv[j];
                 }
@@ -192,7 +226,7 @@ static void attn_naive(const float *restrict Q, const float *restrict K,
                 float m = a[0];
                 for (int k = 1; k < S; k++) if (a[k] > m) m = a[k];
                 float sum = 0.0f;
-                for (int k = 0; k < S; k++) { float e = expf(a[k] - m); row[k] = e; sum += e; }
+                for (int k = 0; k < S; k++) { float e = EXP(a[k] - m); row[k] = e; sum += e; }
                 float r = 1.0f / sum;
                 float *o = ctx + ((size_t)b * S + s) * d + h * dh;
                 for (int j = 0; j < dh; j++) o[j] = 0.0f;
@@ -250,7 +284,7 @@ size_t ft_scratch_bytes(int B, int S, int d_model, int d_ff) {
     size_t ffn = n * (size_t)d_ff;                       /* naive path */
     size_t attn = 2 * (size_t)S * d + (size_t)S * S + S; /* naive path, over-provisioned */
     size_t row = (size_t)(d_ff > 3 * d_model ? d_ff : 3 * d_model); /* fused path */
-    size_t tot = h + h2 + qkv + ctx + ffn + attn + row + S + 16;
+    size_t tot = h + h2 + qkv + ctx + ffn + attn + row + 8 * S + 16;
     return tot * sizeof(float) + 64;
 }
 
@@ -277,7 +311,7 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
     float *ffnbuf = (float *)cur; cur += n * dff * sizeof(float);      /* naive */
     float *attnsc = (float *)cur; cur += (2 * (size_t)S * d + (size_t)S * S + S) * sizeof(float); /* naive */
     float *urow = (float *)cur; cur += (size_t)(dff > 3 * d ? dff : 3 * d) * sizeof(float);
-    float *scores = (float *)cur; cur += (size_t)S * sizeof(float);
+    float *scores = (float *)cur; cur += 8 * (size_t)S * sizeof(float);  /* per-thread (up to 8) */
     if (cur - (uintptr_t)scratch > scratch_bytes) return -1;
 
     embed(W->emb, x, h, B, S, d);
@@ -307,7 +341,13 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
         TOC(ln2, "ln2");
         if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
         TIC(ffn);
+#if FT_FFN_MM
+        for (size_t j = 0; j < n * d; j++) h2[j] = h2[j] > 0.0f ? h2[j] : 0.0f; /* ReLU on ln2 output */
+        ft_mm(h2, W->w1 + (size_t)i * d * dff, ffnbuf, (int)n, dff, d, 0);
+        ft_mm(ffnbuf, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, 1);
+#else
         ffn_fused(h2, W->w1 + (size_t)i * d * dff, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, urow);
+#endif
         TOC(ffn, "ffn");
         if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
 #else

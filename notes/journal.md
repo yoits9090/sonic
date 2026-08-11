@@ -203,3 +203,22 @@ in isolation; full forward ~714 -> remainder is call overhead + noise). ~40 nump
 - v5 headroom: c_v6 20.1 GF/s EXCEEDS numpy matmul-ceiling measurement (16.9) — fused C kernels are at the machine's practical limit (overhead 0.84x).
 - ANOMALY INVESTIGATED: bench-node-3 shows intermittent 3-5s host-contention episodes (~1.5x slowdown) hitting fast C kernels (c_v5/c_v6/c_ground_up bimodal medians ~350 vs ~520us); zero steal, const nominal freq, affects numpy matmuls too (64mm 30→17 GF/s blip). Not an impl bug; leaderboard min-median is robust (matches node-2: c_v6 350/362). c_v4 TINY flag (112 vs 85) = noise window on node-2; DEFAULT consistent (961-1148 vs 1038-1084).
 - Methodology: OMP_NUM_THREADS=2 pinned in node_driver runner.
+
+## 2026-08-11 — ground-up-c: FINAL (attempts 07-11, bench-node-2)
+- Final champion = c_ground_up (libft.so, v9 config): specialized 4x16 unrolled matmul +
+  fused QKV/attention/FFN + minimax-6 fast-exp + OpenMP (only matmuls >=256k MACs) +
+  cached workspace/output. Correctness 1.0-1.2e-6 (bar 1e-3), all variants pass tiny+default.
+- FINAL LATENCY (median_us, 3000 iters/300 warmup, attempt 11):
+    c_ground_up: TINY 36.6  DEFAULT 352.6   (sub-ms both)
+    c_v9:        39.3/352.8   c_v8: 32.1/552.9*  c_v7: 35.2/385.2  (*v8 default noisy)
+    numpy_vec:   ~447/2052-2326   (10-12x slower)
+    numpy_opt12 targets: 131.3/714.6  ->  3.6x / 2.0x faster
+- v3 gate (5 seeds): c_ground_up 47.1-47.7us tiny / 350-355us default, allocs 9, peak ~1.2KB.
+- omp tuning lesson: per-thread scratch must be declared INSIDE the parallel loop (omp_get_thread_num
+  before the region returns 0 for all threads -> race); matmul thread threshold 256k MACs (131k
+  forked on tiny's out-matmul and hurt tiny). fast_exp: Taylor-5 was 1e-4 rel err -> Chebyshev-LS
+  degree-6 gives 2.6e-9 rel err (error back to 1e-6).
+- Variant progression (DEFAULT median): v1 2354 -> v2 1645 -> v3 1327 -> v4 1072 -> v5 361-366
+  (specialized 8x8 kernel) -> v6 350-397 (+omp) -> v7 366-387 (fastexp+ffn-mm) -> v9 330-362
+  (4x16+fastexp+ffn-mm+omp). All correctness-passing.
+- results/ now holds attempts 04-11 JSONs (correctness+latency) + evals_v3 a4/a5/a10.

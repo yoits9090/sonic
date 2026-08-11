@@ -27,7 +27,7 @@ def run_eval(script, args, timeout=900):
     r = sh(cmd, timeout=timeout)
     return r
 
-c_impls = ["c_v1", "c_v2", "c_v3", "c_v4", "c_v5", "c_v6", "c_ground_up"]
+c_impls = ["c_v1", "c_v2", "c_v3", "c_v4", "c_v5", "c_v6", "c_v7", "c_v8", "c_v9", "c_ground_up"]
 summary = {}
 
 # 2. correctness (both cfgs, all c impls + numpy reference impl)
@@ -69,7 +69,7 @@ for cfg in ("tiny", "default"):
 
 # 5. escalation: eval_v3 (5-seed correctness, latency stability, cold call, alloc counts)
 import shutil
-for impl in ["c_v5", "c_v6", "c_ground_up", "numpy_vec"]:
+for impl in ["c_v7", "c_v9", "c_ground_up", "numpy_vec"]:
     r = run_eval("evals/eval_v3.py",
                  ["--node", NODE, "--impl", impl, "--attempt", ATTEMPT])
     tail = [l for l in r.stdout.strip().splitlines() if l.startswith("[v3")][-1] if r.stdout.strip() else "NO OUTPUT"

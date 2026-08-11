@@ -1,0 +1,25 @@
+{
+ "impl": "numpy_vec",
+ "cfg": {
+  "d_model": 32,
+  "n_heads": 2,
+  "d_head": 16,
+  "n_layers": 1,
+  "d_ff": 64,
+  "seq_len": 16,
+  "vocab": 256,
+  "eps": 1e-05
+ },
+ "node": "bench-node-2",
+ "iters": 3000,
+ "numpy_version": "2.0.2",
+ "median_us": 438.8425,
+ "mean_us": 467.55031699999995,
+ "p50_us": 438.8425,
+ "p90_us": 547.129,
+ "p99_us": 834.1208999999997,
+ "min_us": 398.761,
+ "max_us": 1464.453,
+ "throughput_tok_s": 36459.54983849559,
+ "sub_ms": true
+}

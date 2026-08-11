@@ -207,6 +207,9 @@ _register_c("c_v3", "libft_v3.so")                 # blocked + fused layer ops
 _register_c("c_v4", "libft_v4.so")                 # blocked + fused + OpenMP
 _register_c("c_v5", "libft_v5.so")                 # specialized 8x8 unrolled matmul + fused ops
 _register_c("c_v6", "libft_v6.so", rw=True, ro=True)  # specialized + OpenMP + static buffers
+_register_c("c_v7", "libft_v7.so", rw=True, ro=True)  # + fast-exp softmax + ffn-via-matmul
+_register_c("c_v8", "libft_v8.so", rw=True, ro=True)  # + 4x16 tiles
+_register_c("c_v9", "libft_v9.so", rw=True, ro=True)  # + OpenMP
 _register_c("c_ground_up", "libft.so", rw=True, ro=True)  # default best build (v6 kernels)
 
 

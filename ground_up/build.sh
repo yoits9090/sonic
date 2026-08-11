@@ -19,6 +19,12 @@ echo "== build libft_v5.so (specialized 8x8 unrolled matmul, fused ops)"
 $CC $CFLAGS -DFT_KERNEL=3 -DFT_FUSED=1 -o libft_v5.so matmul.c transformer.c -lm
 echo "== build libft_v6.so (specialized 8x8 + OpenMP, fused ops)"
 $CC $CFLAGS -fopenmp -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_OPENMP=1 -o libft_v6.so matmul.c transformer.c -lm
-echo "== build libft.so (default: v6 kernels; wrapper reuses workspace/output)"
-cp libft_v6.so libft.so
+echo "== build libft_v7.so (spec8x8 + fast-exp + ffn-via-matmul)"
+$CC $CFLAGS -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -o libft_v7.so matmul.c transformer.c -lm
+echo "== build libft_v8.so (v7 + 4x16 tiles)"
+$CC $CFLAGS -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=1 -o libft_v8.so matmul.c transformer.c -lm
+echo "== build libft_v9.so (v8 + OpenMP)"
+$CC $CFLAGS -fopenmp -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=1 -DFT_OPENMP=1 -o libft_v9.so matmul.c transformer.c -lm
+echo "== build libft.so (default champion: v9 config; wrapper reuses workspace/output)"
+cp libft_v9.so libft.so
 ls -la libft*.so

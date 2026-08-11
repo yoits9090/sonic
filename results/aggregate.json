@@ -1,5 +1,5 @@
 {
- "updated_ts": "2026-08-11T05:03:19-0400",
+ "updated_ts": "2026-08-11T05:03:27-0400",
  "threshold_pct": 10.0,
  "impls": {
   "c_ground_up": {
@@ -1815,7 +1815,7 @@
      },
      "bench-node-2": {
       "median_us": 434.3755,
-      "n_runs": 4
+      "n_runs": 5
      },
      "bench-node-3": {
       "median_us": 420.539,
@@ -1851,7 +1851,7 @@
      },
      "bench-node-2": {
       "median_us": 2052.4175,
-      "n_runs": 4
+      "n_runs": 5
      },
      "bench-node-3": {
       "median_us": 2003.5705,

@@ -1,0 +1,117 @@
+{
+ "node": "bench-node-2",
+ "attempt": "11",
+ "elapsed_s": 85.9,
+ "summary": {
+  "corr c_v1 tiny": "c_v1: max_abs_err=9.405e-07 max_rel_err=2.418e-07 pass=True",
+  "corr c_v2 tiny": "c_v2: max_abs_err=1.158e-06 max_rel_err=2.979e-07 pass=True",
+  "corr c_v3 tiny": "c_v3: max_abs_err=1.482e-06 max_rel_err=3.810e-07 pass=True",
+  "corr c_v4 tiny": "c_v4: max_abs_err=1.482e-06 max_rel_err=3.810e-07 pass=True",
+  "corr c_v5 tiny": "c_v5: max_abs_err=1.118e-06 max_rel_err=2.873e-07 pass=True",
+  "corr c_v6 tiny": "c_v6: max_abs_err=1.118e-06 max_rel_err=2.873e-07 pass=True",
+  "corr c_v7 tiny": "c_v7: max_abs_err=1.015e-06 max_rel_err=2.611e-07 pass=True",
+  "corr c_v8 tiny": "c_v8: max_abs_err=1.015e-06 max_rel_err=2.611e-07 pass=True",
+  "corr c_v9 tiny": "c_v9: max_abs_err=1.015e-06 max_rel_err=2.611e-07 pass=True",
+  "corr c_ground_up tiny": "c_ground_up: max_abs_err=1.015e-06 max_rel_err=2.611e-07 pass=True",
+  "corr numpy_vec tiny": "numpy_vec: max_abs_err=7.485e-07 max_rel_err=1.925e-07 pass=True",
+  "corr c_v1 default": "c_v1: max_abs_err=1.168e-06 max_rel_err=3.216e-07 pass=True",
+  "corr c_v2 default": "c_v2: max_abs_err=1.822e-06 max_rel_err=5.014e-07 pass=True",
+  "corr c_v3 default": "c_v3: max_abs_err=1.896e-06 max_rel_err=5.218e-07 pass=True",
+  "corr c_v4 default": "c_v4: max_abs_err=1.896e-06 max_rel_err=5.218e-07 pass=True",
+  "corr c_v5 default": "c_v5: max_abs_err=1.480e-06 max_rel_err=4.075e-07 pass=True",
+  "corr c_v6 default": "c_v6: max_abs_err=1.480e-06 max_rel_err=4.075e-07 pass=True",
+  "corr c_v7 default": "c_v7: max_abs_err=1.179e-06 max_rel_err=3.245e-07 pass=True",
+  "corr c_v8 default": "c_v8: max_abs_err=1.179e-06 max_rel_err=3.245e-07 pass=True",
+  "corr c_v9 default": "c_v9: max_abs_err=1.179e-06 max_rel_err=3.245e-07 pass=True",
+  "corr c_ground_up default": "c_ground_up: max_abs_err=1.179e-06 max_rel_err=3.245e-07 pass=True",
+  "corr numpy_vec default": "numpy_vec: max_abs_err=1.021e-06 max_rel_err=2.812e-07 pass=True",
+  "lat c_v1 tiny": [
+   127.82300000000001,
+   true
+  ],
+  "lat c_v2 tiny": [
+   148.1575,
+   true
+  ],
+  "lat c_v3 tiny": [
+   121.918,
+   true
+  ],
+  "lat c_v4 tiny": [
+   112.759,
+   true
+  ],
+  "lat c_v5 tiny": [
+   37.831,
+   true
+  ],
+  "lat c_v6 tiny": [
+   38.751,
+   true
+  ],
+  "lat c_v7 tiny": [
+   35.16,
+   true
+  ],
+  "lat c_v8 tiny": [
+   32.0625,
+   true
+  ],
+  "lat c_v9 tiny": [
+   36.665,
+   true
+  ],
+  "lat c_ground_up tiny": [
+   36.649,
+   true
+  ],
+  "lat c_v1 default": [
+   2285.735,
+   false
+  ],
+  "lat c_v2 default": [
+   1646.745,
+   false
+  ],
+  "lat c_v3 default": [
+   1829.795,
+   false
+  ],
+  "lat c_v4 default": [
+   1033.077,
+   false
+  ],
+  "lat c_v5 default": [
+   373.6305,
+   true
+  ],
+  "lat c_v6 default": [
+   381.4095,
+   true
+  ],
+  "lat c_v7 default": [
+   385.2125,
+   true
+  ],
+  "lat c_v8 default": [
+   552.8845,
+   true
+  ],
+  "lat c_v9 default": [
+   353.736,
+   true
+  ],
+  "lat c_ground_up default": [
+   352.60749999999996,
+   true
+  ],
+  "lat numpy_vec tiny": [
+   438.8425,
+   true
+  ],
+  "lat numpy_vec default": [
+   2103.861,
+   false
+  ]
+ }
+}
