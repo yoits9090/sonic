@@ -130,7 +130,7 @@ def main():
     a = ap.parse_args()
     node = a.node
     out_dir = a.out_dir or os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "results")
-    names = [a.impl] if a.impl else list(IMPLS)
+    names = [x.strip() for x in a.impl.split(",")] if a.impl else list(IMPLS)
     summary = {"node": node, "generation": "v2", "attempt": a.attempt,
                "run_ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "impls": {}}
     for name in names:

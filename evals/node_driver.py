@@ -11,6 +11,7 @@ UPLOAD_FILES = [
     "src/config.py", "src/random_state.py", "src/impls.py",
     "evals/run_all.py", "evals/eval_correctness.py", "evals/eval_latency.py",
     "evals/eval_v2.py", "evals/eval_v3.py", "evals/eval_v4.py", "evals/eval_v5.py", "evals/registry.py",
+    "ground_up/build.sh", "ground_up/ft.h", "ground_up/matmul.c", "ground_up/transformer.c",
 ]
 
 RUNNERS = {
@@ -51,6 +52,7 @@ def main():
     ap.add_argument("--attempt", type=int, default=None)
     ap.add_argument("--impl", default=None)
     ap.add_argument("--timeout", type=float, default=1200)
+    ap.add_argument("--no-build", action="store_true", help="skip building libft .so on the node")
     a = ap.parse_args()
     node = a.node
     gens = ALL_SEQ if a.gen == "all" else [a.gen]
@@ -59,13 +61,13 @@ def main():
     runs = []
     for g in gens:
         script, tmpl_args = RUNNERS[g]
-        args = [t.format(node=node, attempt=attempt, impl=a.impl or "*") for t in tmpl_args]
+        args = [t.format(node=node, attempt=attempt, impl=(a.impl or "*").replace(",", "_")) for t in tmpl_args]
         if a.impl:
-            args += ["--impl", a.impl]
+            args += ["--impl", a.impl]   # comma-separated list OK (eval scripts split)
         runs.append((script, args))
 
     # 0. ensure remote dirs
-    mk = (f"import os\nfor d in ['src','evals','results']: os.makedirs('{rb}/'+d, exist_ok=True)\n"
+    mk = (f"import os\nfor d in ['src','evals','results','ground_up']: os.makedirs('{rb}/'+d, exist_ok=True)\n"
           f"print('dirs ok')\n")
     sh(["colab", "--auth", "adc", "exec", "-s", node, "--timeout", "60"], input=mk, timeout=180)
     # 1. upload (snapshot: unique per attempt so concurrent edits / kernel caches can't leak)
@@ -74,11 +76,17 @@ def main():
         print(f"[driver] upload {f} -> {remote}")
         sh(["colab", "--auth", "adc", "upload", "-s", node, os.path.join(ROOT, f), remote], timeout=180)
     # 2. exec via stdin runpy (keeps __file__ based paths correct on the node)
-    lines = ["import runpy, sys",
+    lines = ["import runpy, sys, os, subprocess",
              "for _m in list(sys.modules):",
              "    if _m == 'src' or _m.startswith('src.'): del sys.modules[_m]",
              f"sys.path = [p for p in sys.path if 'ft_evals3' not in p]",
-             f"sys.path.insert(0, '{rb}')"]
+             f"sys.path.insert(0, '{rb}')",
+             f"os.environ['FT_GROUND_UP_DIR'] = '{rb}/ground_up'",
+             "os.environ.setdefault('OMP_NUM_THREADS', '2')  # avoid OpenMP oversubscription on 2-core nodes"]
+    if not a.no_build:
+        lines.append(f"rc = subprocess.run(['bash', '{rb}/ground_up/build.sh']).returncode")
+        lines.append(f"assert rc == 0, 'build failed rc=%d' % rc")
+        lines.append("print('[driver] libft build OK')")
     for script, args in runs:
         lines.append(f"sys.argv = ['{script}'] + {args!r}")
         lines.append(f"runpy.run_path('{rb}/{script}', run_name='__main__')")
@@ -94,26 +102,28 @@ def main():
     # 3. download
     os.makedirs(os.path.join(ROOT, "results"), exist_ok=True)
     downloaded = []
+    impltag = ("_" + a.impl.replace(",", "-")) if a.impl else ""
     for gen in gens:
         for pat in SUMMARY_FILES[gen]:
             fname = pat.format(node=node, attempt=attempt, impl=a.impl or "*")
             if "*" in fname:
                 continue  # per-impl files handled below
             remote = f"{rb}/{fname}"
-            local = os.path.join(ROOT, "results", os.path.basename(fname))
+            # impl-subset runs get a tagged local copy so they don't clobber the all-impl summary
+            base, ext = os.path.splitext(os.path.basename(fname))
+            local = os.path.join(ROOT, "results", f"{base}{impltag}_a{attempt}{ext}" if impltag else f"{base}{ext}")
             try:
                 sh(["colab", "--auth", "adc", "download", "-s", node, remote, local], timeout=180)
-                downloaded.append(os.path.basename(fname))
+                downloaded.append(os.path.basename(local))
             except RuntimeError as e:
                 print(f"[driver] download warn: {e}")
-    if a.impl is None:
-        for gen in gens:
-            if gen not in ("v2", "v3", "v4", "v5"):
-                continue
-            sum_local = os.path.join(ROOT, "results", os.path.basename(SUMMARY_FILES[gen][0].format(node=node, attempt=attempt)))
-            if os.path.exists(sum_local):
-                data = json.load(open(sum_local))
-                for impl in data.get("impls", {}):
+    for gen in gens:
+        if gen not in ("v2", "v3", "v4", "v5"):
+            continue
+        sum_local = os.path.join(ROOT, "results", os.path.basename(SUMMARY_FILES[gen][0].format(node=node, attempt=attempt)))
+        if os.path.exists(sum_local):
+            data = json.load(open(sum_local))
+            for impl in data.get("impls", {}):
                     fname = SUMMARY_FILES[gen][1].format(node=node, attempt=attempt, impl=impl)
                     remote = f"{rb}/{fname}"
                     local = os.path.join(ROOT, "results", os.path.basename(fname))

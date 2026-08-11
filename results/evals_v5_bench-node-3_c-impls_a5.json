@@ -1,0 +1,197 @@
+{
+ "node": "bench-node-3",
+ "generation": "v5",
+ "attempt": 5,
+ "run_ts": "2026-08-11T08:55:58+0000",
+ "impls": {
+  "c_v1": {
+   "impl": "c_v1",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 5,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 128.712,
+     "achieved_gflops_s": 4.327925912113867,
+     "matmul_ceiling_us": 55.1125,
+     "matmul_ceiling_gflops_s": 10.107616239510094,
+     "overhead_vs_ceiling_x": 2.335441143116353,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 2018.257,
+     "achieved_gflops_s": 3.377044647931359,
+     "matmul_ceiling_us": 416.85,
+     "matmul_ceiling_gflops_s": 16.35059133981048,
+     "overhead_vs_ceiling_x": 4.841686457958498,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "c_v2": {
+   "impl": "c_v2",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 5,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 150.813,
+     "achieved_gflops_s": 3.693686883756705,
+     "matmul_ceiling_us": 54.811,
+     "matmul_ceiling_gflops_s": 10.16321541296455,
+     "overhead_vs_ceiling_x": 2.7515097334476653,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 2947.0114999999996,
+     "achieved_gflops_s": 2.312764643096914,
+     "matmul_ceiling_us": 411.31399999999996,
+     "matmul_ceiling_gflops_s": 16.57065891265554,
+     "overhead_vs_ceiling_x": 7.164870390990824,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "c_v3": {
+   "impl": "c_v3",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 5,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 124.017,
+     "achieved_gflops_s": 4.491771289419999,
+     "matmul_ceiling_us": 54.5865,
+     "matmul_ceiling_gflops_s": 10.205014060252992,
+     "overhead_vs_ceiling_x": 2.271935368635102,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 1188.1970000000001,
+     "achieved_gflops_s": 5.736207043108171,
+     "matmul_ceiling_us": 407.7735,
+     "matmul_ceiling_gflops_s": 16.71453392630958,
+     "overhead_vs_ceiling_x": 2.913865172700041,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "c_v4": {
+   "impl": "c_v4",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 5,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 112.807,
+     "achieved_gflops_s": 4.938133271871426,
+     "matmul_ceiling_us": 55.006,
+     "matmul_ceiling_gflops_s": 10.127186125149983,
+     "overhead_vs_ceiling_x": 2.0508126386212413,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 1052.1464999999998,
+     "achieved_gflops_s": 6.477941997621055,
+     "matmul_ceiling_us": 411.37,
+     "matmul_ceiling_gflops_s": 16.568403140724897,
+     "overhead_vs_ceiling_x": 2.5576646328123096,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "c_v5": {
+   "impl": "c_v5",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 5,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 63.0445,
+     "achieved_gflops_s": 8.835917486854525,
+     "matmul_ceiling_us": 55.4035,
+     "matmul_ceiling_gflops_s": 10.054527241058778,
+     "overhead_vs_ceiling_x": 1.1379154746541282,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 354.2105,
+     "achieved_gflops_s": 19.242072157657663,
+     "matmul_ceiling_us": 401.28700000000003,
+     "matmul_ceiling_gflops_s": 16.984711690136983,
+     "overhead_vs_ceiling_x": 0.8826862071285638,
+     "headroom_pct": 11.731379287143618
+    }
+   }
+  },
+  "c_v6": {
+   "impl": "c_v6",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 5,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 59.354,
+     "achieved_gflops_s": 9.385315227280387,
+     "matmul_ceiling_us": 54.92,
+     "matmul_ceiling_gflops_s": 10.143044428259286,
+     "overhead_vs_ceiling_x": 1.080735615440641,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 339.62,
+     "achieved_gflops_s": 20.068735645721688,
+     "matmul_ceiling_us": 402.7585,
+     "matmul_ceiling_gflops_s": 16.922657125796228,
+     "overhead_vs_ceiling_x": 0.8432348417227693,
+     "headroom_pct": 15.676515827723069
+    }
+   }
+  },
+  "c_ground_up": {
+   "impl": "c_ground_up",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 5,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 58.745,
+     "achieved_gflops_s": 9.4826112860669,
+     "matmul_ceiling_us": 54.9375,
+     "matmul_ceiling_gflops_s": 10.139813424345848,
+     "overhead_vs_ceiling_x": 1.069306029579067,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 355.1975,
+     "achieved_gflops_s": 19.18860352339192,
+     "matmul_ceiling_us": 401.21950000000004,
+     "matmul_ceiling_gflops_s": 16.987569148558332,
+     "overhead_vs_ceiling_x": 0.8852947077597174,
+     "headroom_pct": 11.470529224028258
+    }
+   }
+  }
+ }
+}

@@ -195,3 +195,11 @@ in isolation; full forward ~714 -> remainder is call overhead + noise). ~40 nump
   -> v4 +omp 1072-1148 -> v5 spec8x8 361-366 -> v6 +omp+cached 350-362.
 - results/ JSONs: correctness+latency attempts 04,05,06 + evals_v3 a4/a5.
 - c_v6 eval_v3: allocs 11, peak 0.00MB (numpy 19-20, 0.12-0.53MB); cold/steady ratio ~1.0-1.1.
+
+## 2026-08-11 — C impls battery on bench-node-3 (agent: evals)
+- Full battery (v1-v5) for c_v1..c_v6, c_ground_up on bench-node-3 (attempt 5, snapshot-isolated; libft .so built ON node via ground_up/build.sh, gcc 11.4, -march=native).
+- CORRECTNESS: all C impls pass v1/v2/v4, stability seeds, adversarial (edge seq 1..256, skewed/same/edges/bursty). Allocs: 9-12/forward, peak <=0.15MB (v6/ground_up ~0).
+- LATENCY (best median): TINY c_v6=35.8us (c_v5 38.5, c_ground_up ~36 fresh) vs numpy_opt12 131.2 → 3.7x. DEFAULT c_v6~350us (c_v5 352.1, c_ground_up ~342 fresh) vs numpy_opt12 704.6 → 2x.
+- v5 headroom: c_v6 20.1 GF/s EXCEEDS numpy matmul-ceiling measurement (16.9) — fused C kernels are at the machine's practical limit (overhead 0.84x).
+- ANOMALY INVESTIGATED: bench-node-3 shows intermittent 3-5s host-contention episodes (~1.5x slowdown) hitting fast C kernels (c_v5/c_v6/c_ground_up bimodal medians ~350 vs ~520us); zero steal, const nominal freq, affects numpy matmuls too (64mm 30→17 GF/s blip). Not an impl bug; leaderboard min-median is robust (matches node-2: c_v6 350/362). c_v4 TINY flag (112 vs 85) = noise window on node-2; DEFAULT consistent (961-1148 vs 1038-1084).
+- Methodology: OMP_NUM_THREADS=2 pinned in node_driver runner.

@@ -40,9 +40,15 @@ def extract_records(path, d):
             key = cfg_key(cfg)
             yield impl, key, lat["median_us"], lat.get("node", "?"), ts
         return
-    # flat sibling format: {impl, cfg: "tiny"|"default", median_us, node, ...}
-    if isinstance(d, dict) and "median_us" in d and "impl" in d and isinstance(d.get("cfg"), str):
-        key = cfg_key({"v3_name": d["cfg"]})
+    # flat sibling format: {impl, cfg: "tiny"|"default"|dict, median_us, node, ...}
+    if isinstance(d, dict) and "median_us" in d and "impl" in d and d.get("cfg") is not None:
+        cfg = d["cfg"]
+        if isinstance(cfg, str):
+            key = cfg_key({"v3_name": cfg})
+        elif isinstance(cfg, dict):
+            key = cfg_key(cfg)
+        else:
+            return
         yield d["impl"], key, d["median_us"], d.get("node", "?"), ts
         return
     # v2/v3: {impls: {impl: {... seq_sweep/batch_sweep or configs}}}
@@ -52,9 +58,11 @@ def extract_records(path, d):
             if isinstance(v, dict) and "seq_sweep" in v:  # v2
                 base = {"batch": 1}
                 for sl, r in v["seq_sweep"].items():
-                    yield impl, cfg_key({**base, "seq_len": int(sl)}), r["median_us"], node, ts
+                    key = r["shape"] if r.get("shape") else cfg_key({**base, "seq_len": int(sl)})
+                    yield impl, key, r["median_us"], node, ts
                 for b, r in v["batch_sweep"].items():
-                    yield impl, cfg_key({"batch": int(b), "seq_len": 32}), r["median_us"], node, ts
+                    key = r["shape"] if r.get("shape") else cfg_key({"batch": int(b), "seq_len": 32})
+                    yield impl, key, r["median_us"], node, ts
             elif isinstance(v, dict) and "configs" in v:  # v3 latency seeds
                 for cname, r in v["configs"].items():
                     ls = r.get("latency_seeds")

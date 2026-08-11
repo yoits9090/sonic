@@ -1,0 +1,64 @@
+{
+ "impl": "c_v3",
+ "node": "bench-node-3",
+ "generation": "v4",
+ "attempt": 5,
+ "numpy_version": "2.0.2",
+ "criteria": {
+  "abs_tol": 0.001
+ },
+ "edge_seq": {
+  "1": {
+   "correct": true,
+   "max_abs_err": 1.333147302051696e-06,
+   "median_us": 87.973
+  },
+  "2": {
+   "correct": true,
+   "max_abs_err": 1.4828807599620575e-06,
+   "median_us": 153.7055
+  },
+  "16": {
+   "correct": true,
+   "max_abs_err": 2.1346948404499244e-06,
+   "median_us": 644.5485
+  },
+  "32": {
+   "correct": true,
+   "max_abs_err": 2.342110882957993e-06,
+   "median_us": 1184.737
+  },
+  "64": {
+   "correct": true,
+   "max_abs_err": 2.4363832578644384e-06,
+   "median_us": 2447.428
+  },
+  "256": {
+   "correct": true,
+   "max_abs_err": 2.6797526990751663e-06,
+   "median_us": 12277.77
+  }
+ },
+ "distributions": {
+  "uniform": {
+   "correct": true,
+   "max_abs_err": 2.342110882957993e-06
+  },
+  "skewed": {
+   "correct": true,
+   "max_abs_err": 2.5010015952155185e-06
+  },
+  "same": {
+   "correct": true,
+   "max_abs_err": 1.752487977624284e-06
+  },
+  "edges": {
+   "correct": true,
+   "max_abs_err": 2.382255033239744e-06
+  },
+  "bursty": {
+   "correct": true,
+   "max_abs_err": 2.387694097105708e-06
+  }
+ }
+}

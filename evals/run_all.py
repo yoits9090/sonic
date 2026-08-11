@@ -8,13 +8,15 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--node", required=True)
     ap.add_argument("--out", default=None)
+    ap.add_argument("--impl", default=None, help="comma-separated impl subset")
     a = ap.parse_args()
     node = a.node
     import importlib.util
     spec = importlib.util.spec_from_file_location("impls", os.path.join(ROOT, "src", "impls.py"))
     impls = importlib.util.module_from_spec(spec); spec.loader.exec_module(impls)
+    names = [x.strip() for x in a.impl.split(",")] if a.impl else list(impls.IMPLS)
     out = {}
-    for name in impls.IMPLS:
+    for name in names:
         r = subprocess.run([sys.executable, os.path.join(ROOT, "evals", "eval_correctness.py"),
                             "--impl", name], capture_output=True, text=True)
         print(r.stdout.strip() or r.stderr[-500:])
