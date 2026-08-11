@@ -1,0 +1,16 @@
+{
+ "impl": "c_v5",
+ "cfg": "tiny",
+ "node": "bench-node-3",
+ "median_us": 38.2,
+ "rep_medians_us": [
+  38.4,
+  38.5,
+  38.2
+ ],
+ "iters": 3000,
+ "reps": 3,
+ "note": "re-measure after contention anomaly (min of 3 rep medians)",
+ "numpy_version": "2.0.2",
+ "ts": "2026-08-11T05:03:36.128072"
+}
