@@ -428,6 +428,7 @@ def _bufs(cfg):
             "proj": np.empty((S, d), np.float32),
             "up": np.empty((S, cfg.d_ff), np.float32),
             "out": np.empty((S, cfg.vocab), np.float32),
+            "hc": np.empty((S, 2 * d), np.float32),
         }
         _BUFS_CACHE[key] = b
     return b
@@ -521,3 +522,76 @@ def numpy_opt6(W, x, cfg):
     return b["out"][None]
 
 IMPLS["numpy_opt6"] = numpy_opt6
+
+_STATS_W_CACHE = {}
+def _stats_w(d):
+    w = _STATS_W_CACHE.get(d)
+    if w is None:
+        w = np.zeros((2 * d, 2), np.float32)
+        w[:d, 0] = 1.0 / d
+        w[d:, 1] = 1.0 / d
+        _STATS_W_CACHE[d] = w
+    return w
+
+def numpy_opt7(W, x, cfg):
+    """opt6 + LN stats via one stacked matmul [h|h*h] @ Wstats into (S,2)."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    h = W["emb"][x[0]]
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    p = _prep_weights_v2(W, cfg)
+    maskadd = _maskadd(S)
+    b = _bufs(cfg)
+    Wstats = _stats_w(d)
+    st = np.empty((S, 2), np.float32)
+    eps = cfg.eps
+    for i in range(cfg.n_layers):
+        np.multiply(h, h, out=b["ff"])            # h*h (S,d)
+        np.concatenate([h, b["ff"]], axis=-1, out=b["hc"])
+        np.matmul(b["hc"], Wstats, out=st)        # (S,2): [sum h, sum h*h]
+        mu = st[:, :1]
+        var = st[:, 1:] - mu * mu
+        rstd = 1.0 / np.sqrt(var + eps)
+        np.subtract(h, mu, out=b["ff"])
+        np.matmul(b["ff"], p["qkv"][i], out=b["qkv"])
+        b["qkv"] *= rstd
+        if p["db1"][i] is not None: b["qkv"] += p["db1"][i]
+        Q = b["qkv"][:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        K = b["qkv"][:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        V = b["qkv"][:, 2*d:3*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        np.matmul(Q, K.transpose(0, 2, 1), out=b["att"])
+        b["att"] += maskadd
+        np.exp(b["att"], out=b["e"])
+        np.sum(b["e"], axis=-1, keepdims=True, out=b["den"])
+        np.divide(1.0, b["den"], out=b["den"])
+        np.matmul(b["e"], V, out=b["ctx"])
+        b["ctx"] *= b["den"]
+        np.matmul(b["ctx"].transpose(1, 0, 2).reshape(S, d), p["wo"][i], out=b["proj"])
+        np.add(h, b["proj"], out=h)
+        np.multiply(h, h, out=b["ff"])
+        np.concatenate([h, b["ff"]], axis=-1, out=b["hc"])
+        np.matmul(b["hc"], Wstats, out=st)
+        mu = st[:, :1]
+        var = st[:, 1:] - mu * mu
+        rstd = 1.0 / np.sqrt(var + eps)
+        np.subtract(h, mu, out=b["ff"])
+        np.maximum(b["ff"], 0, out=b["ff"])
+        b["ff"] *= rstd
+        np.matmul(b["ff"], p["w1"][i], out=b["up"])
+        np.matmul(b["up"], p["w2"][i], out=b["ff"])
+        np.add(h, b["ff"], out=h)
+    np.multiply(h, h, out=b["ff"])
+    np.concatenate([h, b["ff"]], axis=-1, out=b["hc"])
+    np.matmul(b["hc"], Wstats, out=st)
+    mu = st[:, :1]
+    var = st[:, 1:] - mu * mu
+    rstd = 1.0 / np.sqrt(var + eps)
+    np.subtract(h, mu, out=b["ff"])
+    np.matmul(b["ff"], p["A3"], out=b["out"])
+    b["out"] *= rstd
+    if p["db3"] is not None: b["out"] += p["db3"]
+    return b["out"][None]
+
+IMPLS["numpy_opt7"] = numpy_opt7

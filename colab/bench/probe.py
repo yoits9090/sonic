@@ -120,4 +120,80 @@ for _ in range(N):
 info["opt2_full_us"] = round((time.perf_counter() - t0) / N * 1e6, 2)
 
 info["stages_us"] = stages
+
+
+# --- micro-alternatives on TINY shapes ---
+def micro(name, fn, n=3000):
+    fn()
+    t0 = time.perf_counter()
+    for _ in range(n):
+        fn()
+    return round((time.perf_counter() - t0) / n * 1e6, 3)
+
+micro_res = {}
+S, d = 16, 32; nh, dh = 2, 16
+rng = np.random.default_rng(0)
+hh = rng.normal(size=(S, d)).astype(np.float32)
+qq = rng.normal(size=(nh, S, dh)).astype(np.float32)
+kk = rng.normal(size=(nh, S, dh)).astype(np.float32)
+vv = rng.normal(size=(nh, S, dh)).astype(np.float32)
+ww = rng.normal(size=(S, d, d)).astype(np.float32)  # dummy
+
+# 1) layernorm stats: mean+mean vs stacked-matmul vs einsum
+def stats_mm():
+    mu = hh.mean(-1, keepdims=True)
+    var = (hh * hh).mean(-1, keepdims=True) - mu * mu
+    return mu, var
+ones2 = np.ones((2*d, 2), np.float32) / d
+hc = np.empty((S, 2*d), np.float32)
+def stats_mat():
+    np.concatenate([hh, hh*hh], axis=-1, out=hc)
+    st = hc @ ones2
+    return st[:, :1], st[:, 1:]
+def stats_ein():
+    mu = np.einsum("ij->i", hh, optimize=True) / d
+    var = np.einsum("ij,ij->i", hh, hh, optimize=True) / d - mu * mu
+    return mu, var
+micro_res["ln_stats_mm_us"] = micro("mm", stats_mm)
+micro_res["ln_stats_mat_us"] = micro("mat", stats_mat)
+micro_res["ln_stats_ein_us"] = micro("ein", stats_ein)
+
+# 2) attention: matmul w/ transpose vs einsum
+def att_mm():
+    return qq @ kk.transpose(0, 2, 1)
+def att_ein():
+    return np.einsum("hij,hkj->hik", qq, kk, optimize=True)
+micro_res["att_matmul_us"] = micro("attmm", att_mm)
+micro_res["att_einsum_us"] = micro("attein", att_ein)
+
+# 3) softmax: exp+sum+div vs exp+sum+recip+mul
+def soft_div():
+    e = np.exp(att_mm())
+    return e / e.sum(-1, keepdims=True)
+def soft_mul():
+    e = np.exp(att_mm())
+    return e * (1.0 / e.sum(-1, keepdims=True))
+micro_res["softmax_div_us"] = micro("softdiv", soft_div)
+micro_res["softmax_mul_us"] = micro("softmul", soft_mul)
+
+# 4) ctx: matmul vs einsum
+def ctx_mm():
+    return soft_mul() @ vv
+def ctx_ein():
+    return np.einsum("hij,hjk->hik", soft_mul(), vv, optimize=True)
+micro_res["ctx_matmul_us"] = micro("ctxmm", ctx_mm)
+micro_res["ctx_einsum_us"] = micro("ctxein", ctx_ein)
+
+# 5) qkv matmul: 2D (S,d)@(d,3d) vs einsum
+h2m = rng.normal(size=(S, d)).astype(np.float32)
+P = rng.normal(size=(d, 3*d)).astype(np.float32)
+def qkv_mm():
+    return h2m @ P
+def qkv_ein():
+    return np.einsum("ij,jk->ik", h2m, P, optimize=True)
+micro_res["qkv_matmul_us"] = micro("qkvmm", qkv_mm)
+micro_res["qkv_einsum_us"] = micro("qkvein", qkv_ein)
+
+info["micro_us"] = micro_res
 print(json.dumps(info, indent=1))
+
