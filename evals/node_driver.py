@@ -76,6 +76,7 @@ def main():
     for script, args in runs:
         lines.append(f"sys.argv = ['{script}'] + {args!r}")
         lines.append(f"runpy.run_path('{REMOTE_BASE}/{script}', run_name='__main__')")
+    lines.append("None")  # avoid IPython echoing runpy's returned globals dict
     runner = "\n".join(lines) + "\n"
     print(f"[driver] exec {gens} timeout={a.timeout}")
     r = subprocess.run(["colab", "--auth", "adc", "exec", "-s", node, "--timeout", str(a.timeout)],

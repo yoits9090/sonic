@@ -11,6 +11,7 @@ import glob, json, os, sys, time
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 RESULTS = os.path.join(ROOT, "results")
+sys.path.insert(0, ROOT)
 DISC_THRESHOLD_PCT = 10.0
 
 

@@ -45,4 +45,9 @@ size_t ft_scratch_bytes(int B, int S, int d_model, int d_ff);
 int ft_forward(const ft_weights *W, const long long *x, int B, int S,
                float *out, float *scratch, size_t scratch_bytes);
 
+/* Debug: same forward, additionally copies each stage into dbg (see impl). */
+int ft_forward_debug(const ft_weights *W, const long long *x, int B, int S,
+                     float *out, float *scratch, size_t scratch_bytes,
+                     float *dbg);
+
 #endif /* FT_H */

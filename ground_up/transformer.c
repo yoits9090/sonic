@@ -222,8 +222,13 @@ size_t ft_scratch_bytes(int B, int S, int d_model, int d_ff) {
 /* ------------------------------------------------------------------ */
 /* Forward pass.                                                        */
 /* ------------------------------------------------------------------ */
-int ft_forward(const ft_weights *W, const long long *x, int B, int S,
-               float *out, float *scratch, size_t scratch_bytes) {
+/* If dbg != NULL, each stage output is copied into it in order:
+ *   [h_embed | h2_ln1 | qkv | ctx | h_after_wo | h2_ln2 | h_after_ffn |
+ *    h2_final | out]   sizes: n*d, n*d, n*3d, n*d, n*d, n*d, n*d, n*d, n*V
+ */
+static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
+                        float *out, float *scratch, size_t scratch_bytes,
+                        float *dbg) {
     const int d = W->d_model, dff = W->d_ff, H = W->n_heads, V = W->vocab, L = W->n_layers;
     const int dh = d / H;
     const size_t n = (size_t)B * S;
@@ -241,30 +246,57 @@ int ft_forward(const ft_weights *W, const long long *x, int B, int S,
     if (cur - (uintptr_t)scratch > scratch_bytes) return -1;
 
     embed(W->emb, x, h, B, S, d);
+    if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
     float inv = 1.0f / sqrtf((float)dh);
 
     for (int i = 0; i < L; i++) {
 #if FT_FUSED
         layernorm(h, h2, W->ln1g + (size_t)i * d, W->ln1b + (size_t)i * d, W->eps, (int)n, d);
+        if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
         ft_mm(h2, W->wqkv + (size_t)i * d * 3 * d, qkv, (int)n, 3 * d, d, 0);
+        if (dbg) { memcpy(dbg, qkv, n * 3 * d * sizeof(float)); dbg += n * 3 * d; }
         attn_fused(qkv, qkv + d, qkv + 2 * d, ctx, B, S, H, dh, inv, scores, 3 * d);
+        if (dbg) { memcpy(dbg, ctx, n * d * sizeof(float)); dbg += n * d; }
         ft_mm(ctx, W->wo + (size_t)i * d * d, h, (int)n, d, d, 1);
+        if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
         layernorm(h, h2, W->ln2g + (size_t)i * d, W->ln2b + (size_t)i * d, W->eps, (int)n, d);
+        if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
         ffn_fused(h2, W->w1 + (size_t)i * d * dff, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, urow);
+        if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
 #else
         layernorm(h, h2, W->ln1g + (size_t)i * d, W->ln1b + (size_t)i * d, W->eps, (int)n, d);
+        if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
         ft_mm(h2, W->wq + (size_t)i * d * d, qkv, (int)n, d, d, 0);
         ft_mm(h2, W->wk + (size_t)i * d * d, qkv + n * d, (int)n, d, d, 0);
         ft_mm(h2, W->wv + (size_t)i * d * d, qkv + 2 * n * d, (int)n, d, d, 0);
+        if (dbg) { memcpy(dbg, qkv, n * 3 * d * sizeof(float)); dbg += n * 3 * d; }
         attn_naive(qkv, qkv + n * d, qkv + 2 * n * d, ctx, B, S, H, dh, inv, attnsc, d);
+        if (dbg) { memcpy(dbg, ctx, n * d * sizeof(float)); dbg += n * d; }
         ft_mm(ctx, W->wo + (size_t)i * d * d, h, (int)n, d, d, 1);
+        if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
         layernorm(h, h2, W->ln2g + (size_t)i * d, W->ln2b + (size_t)i * d, W->eps, (int)n, d);
+        if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
         ft_mm(h2, W->w1 + (size_t)i * d * dff, ffnbuf, (int)n, dff, d, 0);
         for (size_t j = 0; j < n * dff; j++) ffnbuf[j] = ffnbuf[j] > 0.0f ? ffnbuf[j] : 0.0f;
         ft_mm(ffnbuf, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, 1);
+        if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
 #endif
     }
     layernorm(h, h2, W->lnfg, W->lnfb, W->eps, (int)n, d);
+    if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
     ft_mm(h2, W->out_w, out, (int)n, V, d, 0);
+    if (dbg) { memcpy(dbg, out, n * V * sizeof(float)); dbg += n * V; }
     return 0;
+}
+
+int ft_forward(const ft_weights *W, const long long *x, int B, int S,
+               float *out, float *scratch, size_t scratch_bytes) {
+    return forward_impl(W, x, B, S, out, scratch, scratch_bytes, NULL);
+}
+
+/* Debug: same forward, dumps stage outputs into dbg (see forward_impl). */
+int ft_forward_debug(const ft_weights *W, const long long *x, int B, int S,
+                     float *out, float *scratch, size_t scratch_bytes,
+                     float *dbg) {
+    return forward_impl(W, x, B, S, out, scratch, scratch_bytes, dbg);
 }

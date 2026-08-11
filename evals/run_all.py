@@ -25,7 +25,8 @@ def main():
                              "--impl", name, "--node", node, "--iters", "3000"],
                             capture_output=True, text=True)
         try:
-            out[name]["latency"] = json.loads(r2.stdout.strip().splitlines()[-1])
+            start = r2.stdout.index("{")
+            out[name]["latency"] = json.loads(r2.stdout[start:])
         except Exception as e:
             out[name]["latency_err"] = (r2.stdout + r2.stderr)[-300:]
             print((r2.stdout + r2.stderr)[-300:])

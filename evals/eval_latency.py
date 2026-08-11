@@ -44,7 +44,7 @@ def main():
         "throughput_tok_s": float(cfg.seq_len / (np.median(t) / 1e6)),
         "sub_ms": bool(np.median(t) < 1000.0),
     }
-    print(json.dumps(res, indent=1))
+    print(json.dumps(res))
     if a.out:
         os.makedirs(os.path.dirname(a.out), exist_ok=True)
         json.dump(res, open(a.out, "w"), indent=1)
