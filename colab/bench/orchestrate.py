@@ -32,12 +32,12 @@ def main():
     node = a.node
     # 1) sync
     print(f"[sync] uploading to {node}...")
-    sh(f"colab --auth adc upload -s {node} -f src/__init__.py /content/src/__init__.py")
-    sh(f"colab --auth adc upload -s {node} -f src/config.py /content/src/config.py")
-    sh(f"colab --auth adc upload -s {node} -f src/random_state.py /content/src/random_state.py")
-    sh(f"colab --auth adc upload -s {node} -f src/impls.py /content/src/impls.py")
-    sh(f"colab --auth adc upload -s {node} -f colab/bench/run_bench.py /content/bench/run_bench.py")
-    sh(f"colab --auth adc upload -s {node} -f colab/bench/probe.py /content/bench/probe.py")
+    sh(f"colab --auth adc upload -s {node} src/__init__.py /content/src/__init__.py")
+    sh(f"colab --auth adc upload -s {node} src/config.py /content/src/config.py")
+    sh(f"colab --auth adc upload -s {node} src/random_state.py /content/src/random_state.py")
+    sh(f"colab --auth adc upload -s {node} src/impls.py /content/src/impls.py")
+    sh(f"colab --auth adc upload -s {node} colab/bench/run_bench.py /content/bench/run_bench.py")
+    sh(f"colab --auth adc upload -s {node} colab/bench/probe.py /content/bench/probe.py")
 
     if a.probe:
         print("[probe] running probe.py...")

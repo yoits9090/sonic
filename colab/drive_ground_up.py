@@ -36,7 +36,7 @@ def main():
         for f in UPLOAD:
             remote = f"{REMOTE}/{f}"
             print(f"[driver] upload {f}")
-            sh(["colab", "--auth", "adc", "upload", "-s", NODE, "-f",
+            sh(["colab", "--auth", "adc", "upload", "-s", NODE,
                 os.path.join(ROOT, f), remote], timeout=180)
 
     if not a.skip_run:

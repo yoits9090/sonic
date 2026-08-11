@@ -7,7 +7,7 @@ def log(m):
         f.write(f"{time.strftime('%H:%M:%S')} {m}\n")
 names = ["bench-node-1", "bench-node-2", "bench-node-3"]
 attempt = 0
-while attempt < 30:
+while attempt < 200:
     attempt += 1
     ok = []
     for n in names:

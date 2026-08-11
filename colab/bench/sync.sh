@@ -10,4 +10,5 @@ $COL upload -s "$NODE" -f src/random_state.py /content/src/random_state.py
 $COL upload -s "$NODE" -f src/impls.py /content/src/impls.py
 $COL upload -s "$NODE" -f colab/bench/run_bench.py /content/bench/run_bench.py
 $COL upload -s "$NODE" -f colab/bench/probe.py /content/bench/probe.py
+$COL upload -s "$NODE" -f colab/bench/thread_sweep.py /content/bench/thread_sweep.py
 echo "synced to $NODE"

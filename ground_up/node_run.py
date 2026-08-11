@@ -9,6 +9,7 @@ NODE = os.environ.get("NODE", "bench-node-2")
 ATTEMPT = os.environ.get("ATTEMPT", "01")
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 os.chdir(ROOT)
+os.makedirs("results", exist_ok=True)  # eval_correctness does not mkdir itself
 
 def sh(cmd, **kw):
     print(f"$ {cmd}", flush=True)
@@ -44,7 +45,8 @@ for cfg in ("tiny", "default"):
     for impl in c_impls:
         out = f"results/{NODE}_{impl}_{cfg}_latency_{ATTEMPT}.json"
         r = run_eval("evals/eval_latency.py",
-                     ["--impl", impl, "--cfg", cfg, "--node", NODE, "--out", out])
+                     ["--impl", impl, "--cfg", cfg, "--node", NODE, "--out", out,
+                      "--iters", "3000", "--warmup", "300"])
         if r.returncode == 0 and r.stdout.strip():
             j = json.loads(r.stdout)
             summary[f"lat {impl} {cfg}"] = (j["median_us"], j["sub_ms"])
@@ -57,7 +59,8 @@ for cfg in ("tiny", "default"):
 for cfg in ("tiny", "default"):
     out = f"results/{NODE}_numpy_vec_{cfg}_latency_{ATTEMPT}.json"
     r = run_eval("evals/eval_latency.py",
-                 ["--impl", "numpy_vec", "--cfg", cfg, "--node", NODE, "--out", out])
+                 ["--impl", "numpy_vec", "--cfg", cfg, "--node", NODE, "--out", out,
+                  "--iters", "3000", "--warmup", "300"])
     if r.returncode == 0 and r.stdout.strip():
         j = json.loads(r.stdout)
         summary[f"lat numpy_vec {cfg}"] = (j["median_us"], j["sub_ms"])
