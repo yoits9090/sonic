@@ -1,0 +1,27 @@
+{
+ "impl": "numpy_vec",
+ "node": "bench-node-3",
+ "generation": "v5",
+ "attempt": 4,
+ "numpy_version": "2.0.2",
+ "configs": {
+  "tiny": {
+   "theoretical_flops": 557056,
+   "median_us": 431.9735,
+   "achieved_gflops_s": 1.2895605864711608,
+   "matmul_ceiling_us": 55.176500000000004,
+   "matmul_ceiling_gflops_s": 10.095892272978533,
+   "overhead_vs_ceiling_x": 7.828939856641867,
+   "headroom_pct": 0.0
+  },
+  "default": {
+   "theoretical_flops": 6815744,
+   "median_us": 1998.216,
+   "achieved_gflops_s": 3.4109145357659036,
+   "matmul_ceiling_us": 400.80150000000003,
+   "matmul_ceiling_gflops_s": 17.00528565886106,
+   "overhead_vs_ceiling_x": 4.985550203779177,
+   "headroom_pct": 0.0
+  }
+ }
+}

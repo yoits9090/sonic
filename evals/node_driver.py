@@ -108,7 +108,7 @@ def main():
                 print(f"[driver] download warn: {e}")
     if a.impl is None:
         for gen in gens:
-            if gen not in ("v2", "v3"):
+            if gen not in ("v2", "v3", "v4", "v5"):
                 continue
             sum_local = os.path.join(ROOT, "results", os.path.basename(SUMMARY_FILES[gen][0].format(node=node, attempt=attempt)))
             if os.path.exists(sum_local):

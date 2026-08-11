@@ -1,0 +1,64 @@
+{
+ "impl": "numpy_vec",
+ "node": "bench-node-3",
+ "generation": "v4",
+ "attempt": 4,
+ "numpy_version": "2.0.2",
+ "criteria": {
+  "abs_tol": 0.001
+ },
+ "edge_seq": {
+  "1": {
+   "correct": true,
+   "max_abs_err": 2.570332190421354e-07,
+   "median_us": 851.9035
+  },
+  "2": {
+   "correct": true,
+   "max_abs_err": 6.086617497236269e-07,
+   "median_us": 714.284
+  },
+  "16": {
+   "correct": true,
+   "max_abs_err": 9.056117006855935e-07,
+   "median_us": 1466.7939999999999
+  },
+  "32": {
+   "correct": true,
+   "max_abs_err": 1.1335653679889202e-06,
+   "median_us": 2037.1190000000001
+  },
+  "64": {
+   "correct": true,
+   "max_abs_err": 1.0850413457302865e-06,
+   "median_us": 7302.208500000001
+  },
+  "256": {
+   "correct": true,
+   "max_abs_err": 1.4748756447247047e-06,
+   "median_us": 30538.191
+  }
+ },
+ "distributions": {
+  "uniform": {
+   "correct": true,
+   "max_abs_err": 1.1335653679889202e-06
+  },
+  "skewed": {
+   "correct": true,
+   "max_abs_err": 8.582754044139662e-07
+  },
+  "same": {
+   "correct": true,
+   "max_abs_err": 3.0863307054485034e-07
+  },
+  "edges": {
+   "correct": true,
+   "max_abs_err": 4.6372017870055515e-07
+  },
+  "bursty": {
+   "correct": true,
+   "max_abs_err": 9.006047718695953e-07
+  }
+ }
+}
