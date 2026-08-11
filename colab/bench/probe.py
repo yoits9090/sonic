@@ -2,7 +2,7 @@
 Prints JSON: cpu info, numpy/BLAS info, matmul micro-bench, per-stage us for
 the opt2 pipeline, and thread-count experiments for a 512x512 gemm.
 """
-import os, sys, json, time, platform
+import os, sys, json, time, importlib, platform
 try:
     _HERE = os.path.dirname(os.path.realpath(__file__))
 except NameError:  # executed via colab exec (notebook semantics, no __file__)
@@ -15,6 +15,8 @@ for _d in ("/content", _HERE):
 import numpy as np
 from src.config import DEFAULT, TINY
 from src.random_state import RNG, make_input
+import src.impls as _impls_mod
+importlib.reload(_impls_mod)  # node kernels cache modules across execs
 from src.impls import IMPLS
 
 info = {"platform": platform.platform(), "python": sys.version.split()[0]}

@@ -3,7 +3,7 @@ Env config: IMPLS (comma-sep), CFGS (comma-sep tiny|default), ITERS, WARMUP, NOD
 Reads src/impls.py + src/config.py + src/random_state.py from ./src (uploaded).
 Prints one line per (impl,cfg): "CORR {json}" then "LAT {json}".
 """
-import os, sys, json, time
+import os, sys, json, time, importlib
 try:
     _HERE = os.path.dirname(os.path.realpath(__file__))
 except NameError:  # executed via colab exec (notebook semantics, no __file__)
@@ -16,6 +16,8 @@ for _d in ("/content", _HERE):  # node layout: src/ uploaded under /content
 import numpy as np
 from src.config import DEFAULT, TINY
 from src.random_state import RNG, make_input
+import src.impls as _impls_mod
+importlib.reload(_impls_mod)  # node kernels cache modules across execs
 from src.impls import IMPLS
 
 def reference(W64, x, cfg):

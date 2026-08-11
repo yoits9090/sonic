@@ -3,7 +3,7 @@ OPENBLAS_NUM_THREADS in {1,2,4} + OMP_NUM_THREADS, prints JSON lines.
 NOTE: env must be set before numpy import -> run via colab exec --env ... per variant.
 This script just benches the CURRENT env config; orchestrate calls it 3x.
 """
-import os, sys, json, time
+import os, sys, json, time, importlib
 try:
     _HERE = os.path.dirname(os.path.realpath(__file__))
 except NameError:  # executed via colab exec (notebook semantics, no __file__)
@@ -16,6 +16,8 @@ for _d in ("/content", _HERE):
 import numpy as np
 from src.config import DEFAULT, TINY
 from src.random_state import RNG, make_input
+import src.impls as _impls_mod
+importlib.reload(_impls_mod)  # node kernels cache modules across execs
 from src.impls import IMPLS
 
 def bench(fn, W, x, cfg, iters, warmup):

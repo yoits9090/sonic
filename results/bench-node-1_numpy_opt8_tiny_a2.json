@@ -1,0 +1,21 @@
+{
+ "impl": "numpy_opt8",
+ "cfg": "tiny",
+ "node": "bench-node-1",
+ "iters": 3000,
+ "numpy_version": "2.0.2",
+ "median_us": 266.8435,
+ "mean_us": 261.019817,
+ "p90_us": 353.1749,
+ "p99_us": 500.13242999999966,
+ "min_us": 134.173,
+ "throughput_tok_s": 59960.23886660158,
+ "sub_ms": true,
+ "correctness": {
+  "impl": "numpy_opt8",
+  "cfg": "tiny",
+  "node": "bench-node-1",
+  "max_abs_err": 1.4109377755380792e-06,
+  "pass": true
+ }
+}

@@ -1,0 +1,251 @@
+{
+ "node": "bench-node-3",
+ "generation": "v5",
+ "attempt": 1,
+ "run_ts": "2026-08-11T08:14:52+0000",
+ "impls": {
+  "numpy_naive": {
+   "impl": "numpy_naive",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 422.8675,
+     "achieved_gflops_s": 1.317329896480576,
+     "matmul_ceiling_us": 55.0745,
+     "matmul_ceiling_gflops_s": 10.114590236860979,
+     "overhead_vs_ceiling_x": 7.678099664999229,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 2165.492,
+     "achieved_gflops_s": 3.147434393662041,
+     "matmul_ceiling_us": 413.235,
+     "matmul_ceiling_gflops_s": 16.49362711290186,
+     "overhead_vs_ceiling_x": 5.240340242235048,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "numpy_vec": {
+   "impl": "numpy_vec",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 438.1535,
+     "achieved_gflops_s": 1.2713717909362814,
+     "matmul_ceiling_us": 55.199,
+     "matmul_ceiling_gflops_s": 10.091777024946104,
+     "overhead_vs_ceiling_x": 7.937707204840668,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 1997.25,
+     "achieved_gflops_s": 3.4125642758793346,
+     "matmul_ceiling_us": 409.29200000000003,
+     "matmul_ceiling_gflops_s": 16.652521915893786,
+     "overhead_vs_ceiling_x": 4.8797679896015556,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "numpy_opt1": {
+   "impl": "numpy_opt1",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 464.731,
+     "achieved_gflops_s": 1.1986633127551207,
+     "matmul_ceiling_us": 89.659,
+     "matmul_ceiling_gflops_s": 6.213051673563166,
+     "overhead_vs_ceiling_x": 5.183316789167846,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 1618.1350000000002,
+     "achieved_gflops_s": 4.212098496108173,
+     "matmul_ceiling_us": 406.9065,
+     "matmul_ceiling_gflops_s": 16.75014776121787,
+     "overhead_vs_ceiling_x": 3.976675231287778,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "numpy_opt2": {
+   "impl": "numpy_opt2",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 232.15449999999998,
+     "achieved_gflops_s": 2.399505501724067,
+     "matmul_ceiling_us": 54.982,
+     "matmul_ceiling_gflops_s": 10.131606707649777,
+     "overhead_vs_ceiling_x": 4.2223727765450505,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 937.6614999999999,
+     "achieved_gflops_s": 7.26887474850999,
+     "matmul_ceiling_us": 405.04,
+     "matmul_ceiling_gflops_s": 16.827335571795377,
+     "overhead_vs_ceiling_x": 2.314984939759036,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "numpy_opt3": {
+   "impl": "numpy_opt3",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 218.4965,
+     "achieved_gflops_s": 2.549496216186529,
+     "matmul_ceiling_us": 55.164,
+     "matmul_ceiling_gflops_s": 10.098179972445797,
+     "overhead_vs_ceiling_x": 3.9608530925966208,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 914.4875,
+     "achieved_gflops_s": 7.453075083038315,
+     "matmul_ceiling_us": 406.2765,
+     "matmul_ceiling_gflops_s": 16.77612168067806,
+     "overhead_vs_ceiling_x": 2.2508993259516608,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "numpy_opt4": {
+   "impl": "numpy_opt4",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 214.43650000000002,
+     "achieved_gflops_s": 2.597766704828702,
+     "matmul_ceiling_us": 55.5505,
+     "matmul_ceiling_gflops_s": 10.027920540769209,
+     "overhead_vs_ceiling_x": 3.8602082789533854,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 908.5115000000001,
+     "achieved_gflops_s": 7.502099863347905,
+     "matmul_ceiling_us": 405.927,
+     "matmul_ceiling_gflops_s": 16.790565791386133,
+     "overhead_vs_ceiling_x": 2.238115473964531,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "numpy_opt5": {
+   "impl": "numpy_opt5",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 214.6595,
+     "achieved_gflops_s": 2.5950680030466855,
+     "matmul_ceiling_us": 55.189,
+     "matmul_ceiling_gflops_s": 10.09360560981355,
+     "overhead_vs_ceiling_x": 3.8895341462972697,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 1123.5645,
+     "achieved_gflops_s": 6.066179556224854,
+     "matmul_ceiling_us": 407.687,
+     "matmul_ceiling_gflops_s": 16.718080291988706,
+     "overhead_vs_ceiling_x": 2.755948803861786,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "numpy_opt6": {
+   "impl": "numpy_opt6",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 219.83800000000002,
+     "achieved_gflops_s": 2.5339386275348206,
+     "matmul_ceiling_us": 54.998,
+     "matmul_ceiling_gflops_s": 10.12865922397178,
+     "overhead_vs_ceiling_x": 3.997199898178116,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 912.752,
+     "achieved_gflops_s": 7.467246305677774,
+     "matmul_ceiling_us": 404.017,
+     "matmul_ceiling_gflops_s": 16.869943591482535,
+     "overhead_vs_ceiling_x": 2.2591920637002896,
+     "headroom_pct": 0.0
+    }
+   }
+  },
+  "numpy_opt7": {
+   "impl": "numpy_opt7",
+   "node": "bench-node-3",
+   "generation": "v5",
+   "attempt": 1,
+   "numpy_version": "2.0.2",
+   "configs": {
+    "tiny": {
+     "theoretical_flops": 557056,
+     "median_us": 157.8765,
+     "achieved_gflops_s": 3.5284288668674564,
+     "matmul_ceiling_us": 55.051,
+     "matmul_ceiling_gflops_s": 10.11890792174529,
+     "overhead_vs_ceiling_x": 2.867822564531071,
+     "headroom_pct": 0.0
+    },
+    "default": {
+     "theoretical_flops": 6815744,
+     "median_us": 760.7235000000001,
+     "achieved_gflops_s": 8.959554949991684,
+     "matmul_ceiling_us": 402.0905,
+     "matmul_ceiling_gflops_s": 16.95077103288936,
+     "overhead_vs_ceiling_x": 1.8919210973648968,
+     "headroom_pct": 0.0
+    }
+   }
+  }
+ }
+}

@@ -90,3 +90,26 @@ TARGETS HIT: tiny <1000us (5.9x margin), default <1000us (1.3x margin). opt7 = o
 LN stats ([h|h*h] @ Wstats -> (S,2)): biggest single win (~35% on tiny vs opt6).
 Node is noisy (mean >> median; opt6 default p99=9ms) -> medians are the metric.
 Next: thread sweep (2 cores), probe stage timings, opt8+ (attention/softmax micro-opts), attempt-2 stability run.
+
+## 2026-08-11T04:12:29 — numpy-optimizer: opt8/opt9/opt10 round (bench-node-1)
+- opt8 (eps-folded rstd via pow, matmul-ones softmax den, direct ctx divide, np.take): 
+  tiny 141.9us, default 735.6us (A/B vs opt7 160.2/773.9 same exec). Micro data on node:
+  rstd add+sqrt+div 4.94us -> eps-folded pow 2.91us; den sum 3.15us -> matmul-ones 1.90us;
+  ctx recip+mul 12.3us -> in-place div 10.4us; einsum 5-10x slower than matmul everywhere.
+- opt9 (merged [h|h*h|1]@W_ext -> qkv+mu+ex2 in ONE wide matmul): LOSS 305us/972us — wide
+  (16,65)x(65,98) gemm hits a slow OpenBLAS path on this node. Dropped.
+- opt10 (opt8 + ctx /= den in place, no reciprocal): tiny 139.7/142.9 (a1/a2), default 729.1/722.0 (a1/a2).
+  BEST: opt10 tiny ~140us, default ~722us.
+- Thread sweep opt10: tiny 1T=142.5 vs 2T=237.5 (1T wins); default 1T=777.8 vs 2T=726.1 (2T wins ~7%).
+  Mixed + node noise; default-threads (unset) best overall. Noise outliers observed (opt8 tiny 266.8us in a2).
+
+## 2026-08-11T04:17:47 — numpy-optimizer: opt11/opt12 + saturation assessment (bench-node-1)
+- opt11 (locals binding): tiny 138.3, default 717.8.
+- opt12 (zero per-call allocations: buffered take/ones/st/rstd/mm): tiny 131.3-133.3, default 714.6-716.8 (a1/a2).
+- scipy sgemm (alpha/beta fused residual): SLOWER than np matmul+add (6.5 vs 5.9us; qkv 11.5 vs 8.1us). Dropped.
+- exp2/contiguity micros: no wins. Leaderboard: my flat JSONs aren't parseable by evals/leaderboard.py
+  (expects v1/v3 nested format) — noted for evals.
+- BEST (opt12): TINY 131.3us (7.6x under 1000), DEFAULT 714.6us (1.4x under 1000). vs naive: 3.2x/3.0x.
+- Saturation: last 6 attempts gained <=7%; remaining hotspots are the big matmuls themselves
+  (out 1M flops, w1/w2 0.5M) + ~40 numpy calls; pure-numpy floor approx. Next axis if parent wants:
+  sub-agent for thread/OS-level tuning or accept numpy_opt12 as the numpy champion.
