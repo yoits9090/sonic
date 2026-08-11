@@ -765,3 +765,63 @@ def numpy_opt9(W, x, cfg):
     return b["out"][None]
 
 IMPLS["numpy_opt9"] = numpy_opt9
+
+def numpy_opt10(W, x, cfg):
+    """opt8 + ctx normalized by in-place divide (den kept as sum; no reciprocal+mul)."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    h = np.take(W["emb"], x[0], axis=0)
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    p = _prep_weights_v2(W, cfg)
+    maskadd = _maskadd(S)
+    b = _bufs(cfg)
+    Wstats = _stats_w3(d, cfg.eps)
+    ones = np.ones((S, 1), np.float32)
+    hc = b["hc3"]
+    st = np.empty((S, 2), np.float32)
+    for i in range(cfg.n_layers):
+        np.multiply(h, h, out=b["ff"])
+        np.concatenate([h, b["ff"], ones], axis=-1, out=hc)
+        np.matmul(hc, Wstats, out=st)
+        mu = st[:, :1]
+        rstd = (st[:, 1:] - mu * mu) ** -0.5
+        np.subtract(h, mu, out=b["ff"])
+        np.matmul(b["ff"], p["qkv"][i], out=b["qkv"])
+        b["qkv"] *= rstd
+        if p["db1"][i] is not None: b["qkv"] += p["db1"][i]
+        Q = b["qkv"][:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        K = b["qkv"][:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        V = b["qkv"][:, 2*d:3*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        np.matmul(Q, K.transpose(0, 2, 1), out=b["att"])
+        b["att"] += maskadd
+        np.exp(b["att"], out=b["e"])
+        np.matmul(b["e"], ones, out=b["den"])
+        np.matmul(b["e"], V, out=b["ctx"])
+        b["ctx"] /= b["den"]
+        np.matmul(b["ctx"].transpose(1, 0, 2).reshape(S, d), p["wo"][i], out=b["proj"])
+        np.add(h, b["proj"], out=h)
+        np.multiply(h, h, out=b["ff"])
+        np.concatenate([h, b["ff"], ones], axis=-1, out=hc)
+        np.matmul(hc, Wstats, out=st)
+        mu = st[:, :1]
+        rstd = (st[:, 1:] - mu * mu) ** -0.5
+        np.subtract(h, mu, out=b["ff"])
+        np.maximum(b["ff"], 0, out=b["ff"])
+        b["ff"] *= rstd
+        np.matmul(b["ff"], p["w1"][i], out=b["up"])
+        np.matmul(b["up"], p["w2"][i], out=b["ff"])
+        np.add(h, b["ff"], out=h)
+    np.multiply(h, h, out=b["ff"])
+    np.concatenate([h, b["ff"], ones], axis=-1, out=hc)
+    np.matmul(hc, Wstats, out=st)
+    mu = st[:, :1]
+    rstd = (st[:, 1:] - mu * mu) ** -0.5
+    np.subtract(h, mu, out=b["ff"])
+    np.matmul(b["ff"], p["A3"], out=b["out"])
+    b["out"] *= rstd
+    if p["db3"] is not None: b["out"] += p["db3"]
+    return b["out"][None]
+
+IMPLS["numpy_opt10"] = numpy_opt10
