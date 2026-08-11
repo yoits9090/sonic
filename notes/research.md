@@ -11,6 +11,32 @@ Target: TINY config (d_model=32, n_heads=2, d_head=16, n_layers=1, d_ff=64, seq_
 
 ---
 
+## BATCH UPDATE — DEFAULT config at B=4 (escalation, 2026-08-11)
+
+Target now: DEFAULT (d=64, n_heads=4, d_head=16, n_layers=2, d_ff=128, seq_len=32, vocab=512, **B=4**), 2-core Xeon, sub-ms. C champion is already sub-ms at B=1; B=4 needs ~2x.
+
+### Budget at B=4 (why batch flips the playbook)
+- Forward = **13.6 M MACs ≈ 27.3 MFLOP** (QKV 23 %, FFN 31 %, head 31 %, attention 8 %, wo 8 %). All matmuls are now **GEMMs with M = B*S = 128 rows**, e.g. (128×64)@(64×192) QKV, (128×64)@(64×512) head.
+- Weights total **512 KB fp32** (L2-resident; int16 256 KB; int8 128 KB — still L2, L1 is only 32–48 KB, so *byte* savings matter less than *op* savings now).
+- Arithmetic intensity: each weight byte is reused **128×** across the batch rows → the forward is now **compute-bound**, not overhead-bound. The game changes from "kill dispatch overhead" to "peak FMA/microkernel efficiency + both cores".
+- Floors: 2-core fp32 AVX2 peak ≈ 80 GFLOP/s → ~340 µs; realistic good microkernel 40–60 GFLOP/s → **450–700 µs**; int16 ≈ 2× MACs/cycle; AVX2 int8 (`vpmaddubsw`) ≈ 4×; AVX-512 VNNI ≈ 16× (probe `avx512_vnni`).
+
+### Revised TOP-5 for B=4 (priority order)
+1. **Weight-stationary, register-blocked GEMM microkernel with weights pre-packed at load (llama.cpp `repack`/llamafile `sgemm` pattern).** With M=128 the naive per-row GEMV loop wastes 2–4× vs a 6×16/8×8 FMA microkernel that holds a C-tile in registers and streams B-panels; K=64 means only 8 k-iterations per tile, so packing layout + unrolling decide everything. **This is the primary 2x.**
+2. **Fold the batch into rows and split rows across 2 threads (static schedule; pack panels in parallel).** llama.cpp does exactly this: `ggml_compute_forward_mul_mat` treats the whole batch×seq as one row space (`ne2/ne3` loops share src0/weights) and chunks rows over `nth`. Expected **1.6–1.9×** on the ~90 % GEMM-dominated forward. Only 1 thread if the node is 2 hyperthreads.
+3. **int16 static weights (or int8 if the tolerance check passes) for QKV/FFN/head with `_mm256_madd_epi16` / `vpmaddubsw` / VNNI.** Compute-bound now, so 2–4× MACs/cycle is the real prize; bytes-to-L2 is secondary. int8 step ≈ 0.008 vs 1e-3 logit tolerance → verify error on real weights first; int16 (step ≈ 3e-5) is the safe 2×.
+4. **Numpy/BLAS batch path (if staying in numpy): reshape (B,S,d) → (B*S,d) and issue one 2-D `sgemm` per weight; never loop over batch items, never use 4-D `matmul` strided paths.** OpenBLAS has no strided-batched API (issue #5447 — workaround there is OpenMP-over-batch with `OPENBLAS_NUM_THREADS=1`); folding into M is strictly better when all batch GEMMs share the same weights. With the big GEMMs, **2 OpenBLAS threads may now win** — measure 1 vs 2 (default threading is still pathological at small K: OpenBLAS #731).
+5. **Fused causal attention over the flattened row space.** Scores are (128×32) with per-batch-item triangular masking (row i attends to j in the same item, j ≤ i mod S). Keep `1/sqrt(dh)` folded into Q, K pre-transposed, fused exp–sum softmax, skip masked entries in the kernel. Attention is only ~8 % of MACs — cheap to fuse, deadly if done per-batch-item in Python loops.
+
+**Further:** oneMKL JIT GEMM covers our shapes (K=64 < 128 → JIT-eligible; `MKL_DIRECT_CALL_JIT`); `cblas_sgemm_batch` exists in MKL for the *independent*-GEMM case but folding into M is better here; oneDNN BRGeMM JIT is the production-grade route if hand-rolled lags.
+
+### Sources (batch-specific)
+- llama.cpp batch-in-one-graph + row-chunk threading: https://github.com/ggerganov/llama.cpp/blob/master/ggml/src/ggml-cpu/ggml-cpu.c (`ggml_compute_forward_mul_mat` iterates ne2/ne3 with shared src0; threads chunk rows) and DeepWiki batch pipeline: https://deepwiki.com/ggml-org/llama.cpp/3.5-batch-processing-pipeline
+- Weight repacking at load (kernel-ready layout, zero runtime packing): https://github.com/ggerganov/llama.cpp/blob/master/ggml/src/ggml-cpu/repack.cpp and llamafile fp32 sgemm kernels (AVX2/AVX-512, JIT-tuned): https://github.com/ggerganov/llama.cpp/blob/master/ggml/src/ggml-cpu/llamafile/sgemm.cpp
+- OpenBLAS strided-batched GEMM gap + OpenMP-over-batch workaround: https://github.com/OpenMathLib/OpenBLAS/issues/5447
+- MKL batched GEMM rationale (parallel over independent small GEMMs; not needed when shapes share weights): https://www.intel.com/content/www/us/en/developer/articles/technical/introducing-batch-gemm-operations.html
+- oneMKL JIT small-GEMM (m,n,k ≤ 16, or any size with one dim < 128): https://www.intel.com/content/www/us/en/developer/articles/technical/onemkl-improved-small-matrix-performance-using-just-in-time-jit-code.html
+
 ## TOP-5 recommended experiments (priority order)
 
 1. **Fused single-pass forward kernel in C (ctypes/cffi), or numba `njit(fastmath=True)` fallback.** One function call, all weights static/global, loop order tuned, `-O3 -march=native -ffast-math`. Subsumes items 3–5. Expected: **3–10× vs numpy_vec** (overhead 30–150 µs → ~0; threading pathology gone; everything L1/L2-resident). Code sketch in §1. Numba version: decorate the whole forward with `@njit(fastmath=True, nogil=True, cache=True)`, pass weights once (typed dict or flattened arrays), keep attention triangular. Measure first on the node with `-O2` vs `-O3 -march=native -ffast-math`.

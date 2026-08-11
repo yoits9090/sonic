@@ -62,6 +62,15 @@ Both configs are **sub-millisecond**: TINY is ~28x under 1000 us, DEFAULT ~2.9x 
 
 ## v6 escalation (op-domain battery) — current frontier
 
+**Update: B=4 frontier CLOSED.** c_ground_up v14 (blocked attention through the 4x16
+kernel + vectorized causal row-softmax) hits **DEFAULT B=4 S=32 = 911.6 us (sub-ms)**,
+1.62x vs previous, and improved B=1 too (DEFAULT 249.3 us, TINY 48.5 us). Champion
+holds **13/18 cells**; remaining misses: default b4s64 (1965 us) and all B=16 cells
+(compute floor on the 2-core Xeon). Ablations: fast-exp not the bottleneck; fixed-length
+loops worse; 4x32 tiles worse; OpenMP always wins.
+
+## v6 escalation (op-domain battery) — current frontier
+
 18 cells: cfg{tiny,default} x batch{1,4,16} x seq{16,32,64}, sub-ms criterion. **No impl
 passes all cells.** Champion **c_v6 = 11/18**: sub-ms on ALL B=1 cells (tiny 63-184 us,
 default 196-842 us) + B=4 tiny. B>1 gap: default B=4 S=32 is 1482 us (~2x from sub-ms);
