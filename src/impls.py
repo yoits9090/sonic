@@ -425,7 +425,8 @@ def _bufs(cfg):
             "den": np.empty((nh, S, 1), np.float32),
             "ctx": np.empty((nh, S, dh), np.float32),
             "ff": np.empty((S, d), np.float32),
-            "proj": np.empty((S, cfg.d_ff), np.float32),
+            "proj": np.empty((S, d), np.float32),
+            "up": np.empty((S, cfg.d_ff), np.float32),
             "out": np.empty((S, cfg.vocab), np.float32),
         }
         _BUFS_CACHE[key] = b
@@ -471,3 +472,52 @@ def numpy_opt5(W, x, cfg):
     return logits[None]
 
 IMPLS["numpy_opt5"] = numpy_opt5
+
+def numpy_opt6(W, x, cfg):
+    """opt5 + zero per-call temporaries: every op writes into preallocated buffers."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    h = W["emb"][x[0]]
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    p = _prep_weights_v2(W, cfg)
+    maskadd = _maskadd(S)
+    b = _bufs(cfg)
+    ff_len = cfg.d_ff
+    for i in range(cfg.n_layers):
+        mu = h.mean(-1, keepdims=True)
+        rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
+        np.subtract(h, mu, out=b["ff"])               # (S,d) temp = h-mu
+        np.matmul(b["ff"], p["qkv"][i], out=b["qkv"])
+        b["qkv"] *= rstd
+        if p["db1"][i] is not None: b["qkv"] += p["db1"][i]
+        Q = b["qkv"][:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        K = b["qkv"][:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        V = b["qkv"][:, 2*d:3*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        np.matmul(Q, K.transpose(0, 2, 1), out=b["att"])
+        b["att"] += maskadd
+        np.exp(b["att"], out=b["e"])
+        np.sum(b["e"], axis=-1, keepdims=True, out=b["den"])
+        np.divide(1.0, b["den"], out=b["den"])
+        np.matmul(b["e"], V, out=b["ctx"])
+        b["ctx"] *= b["den"]
+        np.matmul(b["ctx"].transpose(1, 0, 2).reshape(S, d), p["wo"][i], out=b["proj"])
+        np.add(h, b["proj"], out=h)
+        mu = h.mean(-1, keepdims=True)
+        rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
+        np.subtract(h, mu, out=b["ff"])
+        np.maximum(b["ff"], 0, out=b["ff"])
+        b["ff"] *= rstd
+        np.matmul(b["ff"], p["w1"][i], out=b["up"])
+        np.matmul(b["up"], p["w2"][i], out=b["ff"])
+        np.add(h, b["ff"], out=h)
+    mu = h.mean(-1, keepdims=True)
+    rstd = 1.0 / np.sqrt((h * h).mean(-1, keepdims=True) - mu * mu + cfg.eps)
+    np.subtract(h, mu, out=b["ff"])
+    np.matmul(b["ff"], p["A3"], out=b["out"])
+    b["out"] *= rstd
+    if p["db3"] is not None: b["out"] += p["db3"]
+    return b["out"][None]
+
+IMPLS["numpy_opt6"] = numpy_opt6
