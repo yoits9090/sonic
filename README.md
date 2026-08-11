@@ -60,6 +60,18 @@ Both configs are **sub-millisecond**: TINY is ~28x under 1000 us, DEFAULT ~2.9x 
 - `colab/` — Colab CLI helpers (probe, session provisioning, bench drivers)
 
 
+## FINAL VERDICT (champion: c_ground_up v14)
+
+- **B=1 sub-ms EVERYWHERE**: tiny 48-109 us, default 161-477 us (B1S32 = 236 us).
+- **13/18 v6 cells sub-ms** (8/9 tiny, 5/9 default); B=4 frontier closed:
+  default B4S32 = 883 us, all tiny B=4 cells sub-ms. Cross-validated node2/node3 within 3-6%.
+- Roofline: 0.43 of node peak GEMM (66.7 GF/s). Cold-start 3.8x (859 us first call, ctypes).
+- Remaining gaps are roofline-bound, not software: default B4S64 = 2111 us (attention
+  O(BS^2), bandwidth-side only), B=16 > 1.8x beyond the 2-core Xeon ceiling.
+- Eval ladder v1->v6: v1 caught the opt3/4 ReLU bug; v3 surfaced node contention
+  (min-median leaderboard); v5 showed C exceeds the numpy matmul ceiling; v6 op-domain
+  + roofline verified the champion. Closing summary in notes/journal.md.
+
 ## v6 escalation (op-domain battery) — current frontier
 
 **Update: B=4 frontier CLOSED.** c_ground_up v14 (blocked attention through the 4x16
@@ -68,6 +80,18 @@ kernel + vectorized causal row-softmax) hits **DEFAULT B=4 S=32 = 911.6 us (sub-
 holds **13/18 cells**; remaining misses: default b4s64 (1965 us) and all B=16 cells
 (compute floor on the 2-core Xeon). Ablations: fast-exp not the bottleneck; fixed-length
 loops worse; 4x32 tiles worse; OpenMP always wins.
+
+## FINAL VERDICT (champion: c_ground_up v14)
+
+- **B=1 sub-ms EVERYWHERE**: tiny 48-109 us, default 161-477 us (B1S32 = 236 us).
+- **13/18 v6 cells sub-ms** (8/9 tiny, 5/9 default); B=4 frontier closed:
+  default B4S32 = 883 us, all tiny B=4 cells sub-ms. Cross-validated node2/node3 within 3-6%.
+- Roofline: 0.43 of node peak GEMM (66.7 GF/s). Cold-start 3.8x (859 us first call, ctypes).
+- Remaining gaps are roofline-bound, not software: default B4S64 = 2111 us (attention
+  O(BS^2), bandwidth-side only), B=16 > 1.8x beyond the 2-core Xeon ceiling.
+- Eval ladder v1->v6: v1 caught the opt3/4 ReLU bug; v3 surfaced node contention
+  (min-median leaderboard); v5 showed C exceeds the numpy matmul ceiling; v6 op-domain
+  + roofline verified the champion. Closing summary in notes/journal.md.
 
 ## v6 escalation (op-domain battery) — current frontier
 
