@@ -438,6 +438,9 @@ def _bufs(cfg):
             "st": np.empty((S, 2), np.float32),
             "rstd": np.empty((S, 1), np.float32),
             "mm": np.empty((S, 1), np.float32),
+            "qkvt": np.empty((3 * d, S), np.float32),
+            "upt": np.empty((cfg.d_ff, S), np.float32),
+            "outt": np.empty((cfg.vocab, S), np.float32),
         }
         b["ones"][:] = 1.0
         _BUFS_CACHE[key] = b
@@ -970,3 +973,79 @@ def numpy_opt12(W, x, cfg):
     return out[None]
 
 IMPLS["numpy_opt12"] = numpy_opt12
+
+def numpy_opt13(W, x, cfg):
+    """opt12 + transposed wide matmuls (P.T @ x.T -> (N,S)): faster BLAS on this node.
+    Q/K/V are (H,dh,S)-layout views; residual adds and final output use .T views."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    emb = W["emb"]
+    p = _prep_weights_v2(W, cfg)
+    maskadd = _maskadd(S)
+    b = _bufs(cfg)
+    Wstats = _stats_w3(d, cfg.eps)
+    h = b["h0"]
+    np.take(emb, x[0], axis=0, out=h)
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    hc = b["hc3"]
+    ones = b["ones"]
+    st = b["st"]
+    rstd = b["rstd"]
+    mm = b["mm"]
+    qkvW = p["qkv"]; db1 = p["db1"]; w1 = p["w1"]; w2 = p["w2"]; wo = p["wo"]
+    A3 = p["A3"]; db3 = p["db3"]
+    ff = b["ff"]; qkvT = b["qkvt"]; att = b["att"]; e = b["e"]; den = b["den"]
+    ctx = b["ctx"]; proj = b["proj"]; upT = b["upt"]; outT = b["outt"]
+    hT = h.T  # (d,S) view
+    for i in range(cfg.n_layers):
+        np.multiply(h, h, out=ff)
+        np.concatenate([h, ff, ones], axis=-1, out=hc)
+        np.matmul(hc, Wstats, out=st)
+        mu = st[:, :1]
+        np.multiply(mu, mu, out=mm)
+        np.subtract(st[:, 1:], mm, out=rstd)
+        np.power(rstd, -0.5, out=rstd)
+        np.subtract(h, mu, out=ff)
+        np.matmul(qkvW[i].T, ff.T, out=qkvT)          # (3d,S)
+        qkvT *= rstd.T
+        if db1[i] is not None: qkvT += db1[i][:, None]
+        Q = qkvT[:d].reshape(n_heads, dh, S).transpose(0, 2, 1)
+        K = qkvT[d:2*d].reshape(n_heads, dh, S).transpose(0, 2, 1)
+        V = qkvT[2*d:3*d].reshape(n_heads, dh, S).transpose(0, 2, 1)
+        np.matmul(Q, K.transpose(0, 2, 1), out=att)
+        att += maskadd
+        np.exp(att, out=e)
+        np.matmul(e, ones, out=den)
+        np.matmul(e, V, out=ctx)
+        ctx /= den
+        np.matmul(ctx.transpose(1, 0, 2).reshape(S, d), wo[i], out=proj)
+        np.add(h, proj, out=h)
+        np.multiply(h, h, out=ff)
+        np.concatenate([h, ff, ones], axis=-1, out=hc)
+        np.matmul(hc, Wstats, out=st)
+        mu = st[:, :1]
+        np.multiply(mu, mu, out=mm)
+        np.subtract(st[:, 1:], mm, out=rstd)
+        np.power(rstd, -0.5, out=rstd)
+        np.subtract(h, mu, out=ff)
+        np.maximum(ff, 0, out=ff)
+        ff *= rstd
+        np.matmul(w1[i].T, ff.T, out=upT)             # (d_ff,S)
+        np.matmul(w2[i].T, upT, out=qkvT[:d])         # (d,S) into spare slice
+        np.add(hT, qkvT[:d], out=hT)                  # h += proj via transposed view
+    np.multiply(h, h, out=ff)
+    np.concatenate([h, ff, ones], axis=-1, out=hc)
+    np.matmul(hc, Wstats, out=st)
+    mu = st[:, :1]
+    np.multiply(mu, mu, out=mm)
+    np.subtract(st[:, 1:], mm, out=rstd)
+    np.power(rstd, -0.5, out=rstd)
+    np.subtract(h, mu, out=ff)
+    np.matmul(A3.T, ff.T, out=outT)                   # (V,S)
+    outT *= rstd.T
+    if db3 is not None: outT += db3[:, None]
+    return outT.T[None]
+
+IMPLS["numpy_opt13"] = numpy_opt13
