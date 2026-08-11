@@ -1,5 +1,5 @@
 {
- "updated_ts": "2026-08-11T07:10:42-0400",
+ "updated_ts": "2026-08-11T08:31:02-0400",
  "impls": {
   "c_ground_up": {
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=1": {
@@ -9,52 +9,52 @@
     "ts": "2026-08-11T09:03:36"
    },
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=16": {
-    "median_us": 429.585,
+    "median_us": 332.3555,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=32,h=2,L=1,ff=64,S=16,V=256,B=4": {
-    "median_us": 131.0115,
+    "median_us": 102.04150000000001,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=32,h=2,L=1,ff=64,S=32,V=256,B=1": {
-    "median_us": 87.94149999999999,
+    "median_us": 58.424499999999995,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=32,h=2,L=1,ff=64,S=32,V=256,B=16": {
-    "median_us": 1077.386,
+    "median_us": 656.3689999999999,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=32,h=2,L=1,ff=64,S=32,V=256,B=4": {
-    "median_us": 276.78,
+    "median_us": 172.9495,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=32,h=2,L=1,ff=64,S=64,V=256,B=1": {
-    "median_us": 208.0275,
+    "median_us": 109.268,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=32,h=2,L=1,ff=64,S=64,V=256,B=16": {
-    "median_us": 2895.7855,
+    "median_us": 1499.386,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=32,h=2,L=1,ff=64,S=64,V=256,B=4": {
-    "median_us": 756.3415,
+    "median_us": 359.8345,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=64,h=4,L=2,ff=128,S=128,V=512,B=1": {
     "median_us": 2180.2995,
@@ -63,58 +63,58 @@
     "ts": "2026-08-11T08:57:40"
    },
    "d=64,h=4,L=2,ff=128,S=16,V=512,B=1": {
-    "median_us": 173.683,
+    "median_us": 161.3265,
     "node": "bench-node-3",
-    "source": "evals_v2_bench-node-3_c-impls_a5.json",
-    "ts": "2026-08-11T08:57:40"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=64,h=4,L=2,ff=128,S=16,V=512,B=16": {
-    "median_us": 2288.7690000000002,
+    "median_us": 1776.622,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=64,h=4,L=2,ff=128,S=16,V=512,B=4": {
-    "median_us": 573.8815,
+    "median_us": 432.82349999999997,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=1": {
-    "median_us": 351.916,
-    "node": "bench-node-2",
-    "source": "bench-node-2_c_ground_up_default_latency_06.json",
-    "ts": "2026-08-11T08:48:10"
+    "median_us": 235.7125,
+    "node": "bench-node-3",
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=16": {
-    "median_us": 5604.777,
+    "median_us": 3443.784,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=64,h=4,L=2,ff=128,S=32,V=512,B=4": {
-    "median_us": 1314.135,
+    "median_us": 883.2695,
     "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=64,h=4,L=2,ff=128,S=64,V=512,B=1": {
-    "median_us": 815.5295,
+    "median_us": 476.6815,
     "node": "bench-node-3",
-    "source": "evals_v2_bench-node-3_c-impls_a5.json",
-    "ts": "2026-08-11T08:57:40"
+    "source": "evals_v6_bench-node-3_c_ground_up_a8.json",
+    "ts": "2026-08-11T12:29:18"
    },
    "d=64,h=4,L=2,ff=128,S=64,V=512,B=16": {
-    "median_us": 13605.959,
-    "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "median_us": 8234.353,
+    "node": "bench-node-2",
+    "source": "evals_v6_bench-node-2_c_ground_up_a7.json",
+    "ts": "2026-08-11T11:50:27"
    },
    "d=64,h=4,L=2,ff=128,S=64,V=512,B=4": {
-    "median_us": 3597.3779999999997,
-    "node": "bench-node-3",
-    "source": "evals_v6_bench-node-3.json",
-    "ts": "2026-08-11T11:10:08"
+    "median_us": 1963.5285,
+    "node": "bench-node-2",
+    "source": "evals_v6_bench-node-2_c_ground_up_a7.json",
+    "ts": "2026-08-11T11:50:27"
    },
    "d=64,h=4,L=2,ff=128,S=8,V=512,B=1": {
     "median_us": 83.7565,

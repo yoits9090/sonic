@@ -40,6 +40,13 @@ def extract_records(path, d):
             key = cfg_key(cfg)
             yield impl, key, lat["median_us"], lat.get("node", "?"), ts
         return
+    # per-impl v6 file: {impl, cells: {key: {shape, median_us, correct}}, ...}
+    if isinstance(d, dict) and "cells" in d and "impl" in d and isinstance(d["cells"], dict):
+        node = d.get("node", "?")
+        for key, r in d["cells"].items():
+            if r.get("correct"):
+                yield d["impl"], r["shape"] if r.get("shape") else key, r["median_us"], node, ts
+        return
     # flat sibling format: {impl, cfg: "tiny"|"default"|dict, median_us, node, ...}
     if isinstance(d, dict) and "median_us" in d and "impl" in d and d.get("cfg") is not None:
         cfg = d["cfg"]

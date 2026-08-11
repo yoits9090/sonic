@@ -113,7 +113,7 @@ def main():
             remote = f"{rb}/{fname}"
             # impl-subset runs get a tagged local copy so they don't clobber the all-impl summary
             base, ext = os.path.splitext(os.path.basename(fname))
-            local = os.path.join(ROOT, "results", f"{base}{impltag}_a{attempt}{ext}" if impltag else f"{base}{ext}")
+            local = os.path.join(ROOT, "results", f"{base}{impltag}_summary_a{attempt}{ext}" if impltag else f"{base}{ext}")
             try:
                 sh(["colab", "--auth", "adc", "download", "-s", node, remote, local], timeout=180)
                 downloaded.append(os.path.basename(local))
