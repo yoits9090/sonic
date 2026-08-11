@@ -431,7 +431,8 @@ def _bufs(cfg):
             "proj": np.empty((S, d), np.float32),
             "up": np.empty((S, cfg.d_ff), np.float32),
             "out": np.empty((S, cfg.vocab), np.float32),
-            "hc": np.empty((S, 2 * d + 1), np.float32),
+            "hc": np.empty((S, 2 * d), np.float32),
+            "hc3": np.empty((S, 2 * d + 1), np.float32),
         }
         _BUFS_CACHE[key] = b
     return b
@@ -626,7 +627,7 @@ def numpy_opt8(W, x, cfg):
     b = _bufs(cfg)
     Wstats = _stats_w3(d, cfg.eps)
     ones = np.ones((S, 1), np.float32)
-    hc = b["hc"]  # (S, 2d+1)
+    hc = b["hc3"]  # (S, 2d+1)
     st = np.empty((S, 2), np.float32)
     for i in range(cfg.n_layers):
         np.multiply(h, h, out=b["ff"])
@@ -673,3 +674,94 @@ def numpy_opt8(W, x, cfg):
     return b["out"][None]
 
 IMPLS["numpy_opt8"] = numpy_opt8
+
+# merged weight cache: W_ext per layer -> big = hc @ W_ext = [qkv | mu | ex2+eps], (S, 3d+2)
+_MERGED_CACHE = {}
+def _merged_weights(W, cfg):
+    key = ("m1", id(W), cfg.d_model, cfg.n_heads, cfg.d_head, cfg.n_layers, cfg.d_ff, cfg.seq_len, cfg.vocab)
+    e = _MERGED_CACHE.get(key)
+    if e is None:
+        d, dh = cfg.d_model, cfg.d_head
+        inv = np.float32(1.0 / np.sqrt(dh))
+        eps = np.float32(cfg.eps)
+        Wext, c1, db1, w1, w2, wo, A3, db3 = {}, {}, {}, {}, {}, {}, None, None
+        for i in range(cfg.n_layers):
+            g1 = W[f"ln1_g{i}"]; b1 = W[f"ln1_b{i}"]
+            P = np.concatenate([W[f"wq{i}"] * inv, W[f"wk{i}"], W[f"wv{i}"]], axis=1)  # (d,3d)
+            Wx = np.zeros((2 * d + 1, 3 * d + 2), np.float32)
+            Wx[:d, :3*d] = P
+            Wx[:d, 3*d] = 1.0 / d
+            Wx[d:2*d, 3*d+1] = 1.0 / d
+            Wx[2*d, 3*d+1] = eps
+            Wext[i] = Wx
+            c1[i] = P.sum(0) if np.all(g1 == 1) else (g1 @ P)
+            db1[i] = None if not np.any(b1 != 0) else (b1 @ P)
+            w1[i] = W[f"w1{i}"]; w2[i] = W[f"w2{i}"]; wo[i] = W[f"wo{i}"]
+        gf = W["lnf_g"]; bf = W["lnf_b"]
+        outW = W["out"]
+        A3 = outW if np.all(gf == 1) else (gf[:, None] * outW)
+        db3 = None if not np.any(bf != 0) else (bf @ outW)
+        e = {"Wext": Wext, "c1": c1, "db1": db1, "w1": w1, "w2": w2, "wo": wo,
+             "A3": A3, "db3": db3, "ref": W}
+        _MERGED_CACHE[key] = e
+    return e
+
+def numpy_opt9(W, x, cfg):
+    """opt8 + merged stats/QKV matmul: [h|h*h|1] @ W_ext -> [qkv|mu|ex2+eps] in one call."""
+    B, S = x.shape
+    if B != 1:
+        return numpy_vec(W, x, cfg)
+    d = cfg.d_model
+    h = np.take(W["emb"], x[0], axis=0)
+    n_heads, dh = cfg.n_heads, cfg.d_head
+    p = _merged_weights(W, cfg)
+    maskadd = _maskadd(S)
+    b = _bufs(cfg)
+    ones = np.ones((S, 1), np.float32)
+    big = np.empty((S, 3 * d + 2), np.float32)
+    hc = b["hc3"]
+    for i in range(cfg.n_layers):
+        np.multiply(h, h, out=b["ff"])
+        np.concatenate([h, b["ff"], ones], axis=-1, out=hc)
+        np.matmul(hc, p["Wext"][i], out=big)
+        qkv = big[:, :3*d]
+        mu = big[:, 3*d:3*d+1]
+        rstd = (big[:, 3*d+1:] - mu * mu) ** -0.5
+        qkv -= mu * p["c1"][i]
+        qkv *= rstd
+        if p["db1"][i] is not None: qkv += p["db1"][i]
+        Q = qkv[:, :d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        K = qkv[:, d:2*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        V = qkv[:, 2*d:3*d].reshape(S, n_heads, dh).transpose(1, 0, 2)
+        np.matmul(Q, K.transpose(0, 2, 1), out=b["att"])
+        b["att"] += maskadd
+        np.exp(b["att"], out=b["e"])
+        np.matmul(b["e"], ones, out=b["den"])
+        np.divide(1.0, b["den"], out=b["den"])
+        np.matmul(b["e"], V, out=b["ctx"])
+        b["ctx"] *= b["den"]
+        np.matmul(b["ctx"].transpose(1, 0, 2).reshape(S, d), p["wo"][i], out=b["proj"])
+        np.add(h, b["proj"], out=h)
+        np.multiply(h, h, out=b["ff"])
+        np.concatenate([h, b["ff"], ones], axis=-1, out=hc)
+        np.matmul(hc, p["Wext"][i], out=big)
+        mu = big[:, 3*d:3*d+1]
+        rstd = (big[:, 3*d+1:] - mu * mu) ** -0.5
+        np.subtract(h, mu, out=b["ff"])
+        np.maximum(b["ff"], 0, out=b["ff"])
+        b["ff"] *= rstd
+        np.matmul(b["ff"], p["w1"][i], out=b["up"])
+        np.matmul(b["up"], p["w2"][i], out=b["ff"])
+        np.add(h, b["ff"], out=h)
+    np.multiply(h, h, out=b["ff"])
+    np.concatenate([h, b["ff"], ones], axis=-1, out=hc)
+    np.matmul(hc, p["Wext"][0], out=big)
+    mu = big[:, 3*d:3*d+1]
+    rstd = (big[:, 3*d+1:] - mu * mu) ** -0.5
+    np.subtract(h, mu, out=b["ff"])
+    np.matmul(b["ff"], p["A3"], out=b["out"])
+    b["out"] *= rstd
+    if p["db3"] is not None: b["out"] += p["db3"]
+    return b["out"][None]
+
+IMPLS["numpy_opt9"] = numpy_opt9
