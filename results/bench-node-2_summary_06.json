@@ -1,0 +1,87 @@
+{
+ "node": "bench-node-2",
+ "attempt": "06",
+ "elapsed_s": 78.0,
+ "summary": {
+  "corr c_v1 tiny": "c_v1: max_abs_err=9.405e-07 max_rel_err=2.418e-07 pass=True",
+  "corr c_v2 tiny": "c_v2: max_abs_err=1.158e-06 max_rel_err=2.979e-07 pass=True",
+  "corr c_v3 tiny": "c_v3: max_abs_err=1.482e-06 max_rel_err=3.810e-07 pass=True",
+  "corr c_v4 tiny": "c_v4: max_abs_err=1.482e-06 max_rel_err=3.810e-07 pass=True",
+  "corr c_v5 tiny": "c_v5: max_abs_err=1.118e-06 max_rel_err=2.873e-07 pass=True",
+  "corr c_v6 tiny": "c_v6: max_abs_err=1.118e-06 max_rel_err=2.873e-07 pass=True",
+  "corr c_ground_up tiny": "c_ground_up: max_abs_err=1.118e-06 max_rel_err=2.873e-07 pass=True",
+  "corr numpy_vec tiny": "numpy_vec: max_abs_err=7.485e-07 max_rel_err=1.925e-07 pass=True",
+  "corr c_v1 default": "c_v1: max_abs_err=1.168e-06 max_rel_err=3.216e-07 pass=True",
+  "corr c_v2 default": "c_v2: max_abs_err=1.822e-06 max_rel_err=5.014e-07 pass=True",
+  "corr c_v3 default": "c_v3: max_abs_err=1.896e-06 max_rel_err=5.218e-07 pass=True",
+  "corr c_v4 default": "c_v4: max_abs_err=1.896e-06 max_rel_err=5.218e-07 pass=True",
+  "corr c_v5 default": "c_v5: max_abs_err=1.480e-06 max_rel_err=4.075e-07 pass=True",
+  "corr c_v6 default": "c_v6: max_abs_err=1.480e-06 max_rel_err=4.075e-07 pass=True",
+  "corr c_ground_up default": "c_ground_up: max_abs_err=1.480e-06 max_rel_err=4.075e-07 pass=True",
+  "corr numpy_vec default": "numpy_vec: max_abs_err=1.021e-06 max_rel_err=2.812e-07 pass=True",
+  "lat c_v1 tiny": [
+   133.098,
+   true
+  ],
+  "lat c_v2 tiny": [
+   148.6625,
+   true
+  ],
+  "lat c_v3 tiny": [
+   120.7175,
+   true
+  ],
+  "lat c_v4 tiny": [
+   114.23599999999999,
+   true
+  ],
+  "lat c_v5 tiny": [
+   40.772999999999996,
+   true
+  ],
+  "lat c_v6 tiny": [
+   36.758,
+   true
+  ],
+  "lat c_ground_up tiny": [
+   39.058,
+   true
+  ],
+  "lat c_v1 default": [
+   2490.7215,
+   false
+  ],
+  "lat c_v2 default": [
+   1692.752,
+   false
+  ],
+  "lat c_v3 default": [
+   1763.4515000000001,
+   false
+  ],
+  "lat c_v4 default": [
+   1071.54,
+   false
+  ],
+  "lat c_v5 default": [
+   361.373,
+   true
+  ],
+  "lat c_v6 default": [
+   350.282,
+   true
+  ],
+  "lat c_ground_up default": [
+   351.916,
+   true
+  ],
+  "lat numpy_vec tiny": [
+   447.2635,
+   true
+  ],
+  "lat numpy_vec default": [
+   2052.4175,
+   false
+  ]
+ }
+}

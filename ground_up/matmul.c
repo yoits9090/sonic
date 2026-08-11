@@ -80,12 +80,56 @@ static void mm_blocked(const float *restrict A, const float *restrict B,
 }
 
 /* ------------------------------------------------------------------ */
+/* Kernel 3: specialized 8x8 blocked matmul for dims divisible by 8     */
+/* (true for every matmul in this benchmark: d, 3d, d_ff, vocab are     */
+/* multiples of 8). Compile-time tile bounds let gcc keep 8 accumulators */
+/* in ymm registers and emit vbroadcastss + vfmadd chains.              */
+/* ------------------------------------------------------------------ */
+static void mm_blocked8(const float *restrict A, const float *restrict B,
+                        float *restrict C, int M, int N, int K, int acc) {
+    for (int i0 = 0; i0 < M; i0 += 8) {
+        for (int j0 = 0; j0 < N; j0 += 8) {
+            float accv[8][8];
+            if (acc) {
+                for (int ii = 0; ii < 8; ii++)
+                    for (int jj = 0; jj < 8; jj++)
+                        accv[ii][jj] = C[(size_t)(i0 + ii) * N + j0 + jj];
+            } else {
+                for (int ii = 0; ii < 8; ii++)
+                    for (int jj = 0; jj < 8; jj++) accv[ii][jj] = 0.0f;
+            }
+            for (int k = 0; k < K; k += 8) {
+                for (int ii = 0; ii < 8; ii++) {
+                    const float *ai = A + (size_t)(i0 + ii) * K + k;
+                    float *av = accv[ii];
+#pragma GCC unroll 8
+                    for (int kk = 0; kk < 8; kk++) {
+                        float a = ai[kk];
+                        const float *bk = B + (size_t)(k + kk) * N + j0;
+#pragma GCC unroll 8
+                        for (int jj = 0; jj < 8; jj++) av[jj] += a * bk[jj];
+                    }
+                }
+            }
+            for (int ii = 0; ii < 8; ii++)
+                for (int jj = 0; jj < 8; jj++)
+                    C[(size_t)(i0 + ii) * N + j0 + jj] = accv[ii][jj];
+        }
+    }
+}
+
+/* ------------------------------------------------------------------ */
 /* Dispatch.                                                           */
 /* ------------------------------------------------------------------ */
 void ft_mm(const float *A, const float *B, float *C,
            int M, int N, int K, int acc) {
 #if FT_KERNEL == 1
     mm_naive(A, B, C, M, N, K, acc);
+#elif FT_KERNEL == 3
+    if ((M & 7) == 0 && (N & 7) == 0 && (K & 7) == 0)
+        mm_blocked8(A, B, C, M, N, K, acc);
+    else
+        mm_blocked(A, B, C, M, N, K, acc);
 #else
     mm_blocked(A, B, C, M, N, K, acc);
 #endif

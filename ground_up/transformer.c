@@ -43,6 +43,26 @@ void ft_mm(const float *A, const float *B, float *C,
 #define FT_FUSED 1
 #endif
 
+/* FT_PROFILE: per-stage timing (debug builds only). */
+#if defined(FT_PROFILE)
+#include <stdio.h>
+#include <time.h>
+static double _now(void) {
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return ts.tv_sec + ts.tv_nsec * 1e-9;
+}
+#define TIC(name) double _t_##name = _now()
+#define TOC(name, what) do { \
+    double _d = (_now() - _t_##name) * 1e6; \
+    FILE *_fp = fopen("/tmp/ft_prof.log", "a"); \
+    if (_fp) { fprintf(_fp, "[prof] %-8s %10.1f us\n", what, _d); fclose(_fp); } \
+} while (0)
+#else
+#define TIC(name)
+#define TOC(name, what)
+#endif
+
 /* ------------------------------------------------------------------ */
 /* Embedding gather: h[(b,s),:] = emb[x[b,s],:]                         */
 /* ------------------------------------------------------------------ */
@@ -82,6 +102,21 @@ static void layernorm(const float *restrict x, float *restrict y,
 /* Fused causal attention (flash-style).                                */
 /* Q,K,V are (B*S, d); ctx is (B*S, d). scores[] holds S floats.        */
 /* ------------------------------------------------------------------ */
+static inline float _dot_generic(const float *restrict a, const float *restrict b, int n) {
+    float s = 0.0f;
+    for (int j = 0; j < n; j++) s += a[j] * b[j];
+    return s;
+}
+
+/* 16-wide dot product with two independent 8-wide accumulator chains so the
+ * compiler emits back-to-back vector FMAs instead of one serial chain. */
+static inline float dot16(const float *restrict a, const float *restrict b) {
+    float s0 = 0.0f, s1 = 0.0f;
+#pragma GCC unroll 8
+    for (int j = 0; j < 8; j++) { s0 += a[j] * b[j]; s1 += a[8 + j] * b[8 + j]; }
+    return s0 + s1;
+}
+
 static void attn_fused(const float *restrict Q, const float *restrict K,
                        const float *restrict V, float *restrict ctx,
                        int B, int S, int H, int dh, float inv,
@@ -94,15 +129,13 @@ static void attn_fused(const float *restrict Q, const float *restrict K,
                 /* score for k=0 seeds the running max (keeps everything
                  * finite under -ffast-math, no -INFINITY needed) */
                 const float *k0 = K + ((size_t)b * S) * stride + h * dh;
-                float acc0 = 0.0f;
-                for (int j = 0; j < dh; j++) acc0 += q[j] * k0[j];
+                float acc0 = (dh == 16) ? dot16(q, k0) : _dot_generic(q, k0, dh);
                 acc0 *= inv;
                 scores[0] = acc0;
                 float m = acc0;
                 for (int k = 1; k <= s; k++) {
                     const float *kk = K + ((size_t)b * S + k) * stride + h * dh;
-                    float acc = 0.0f;
-                    for (int j = 0; j < dh; j++) acc += q[j] * kk[j];
+                    float acc = (dh == 16) ? dot16(q, kk) : _dot_generic(q, kk, dh);
                     acc *= inv;
                     scores[k] = acc;
                     if (acc > m) m = acc;
@@ -177,20 +210,22 @@ static void attn_naive(const float *restrict Q, const float *restrict K,
 /* Fused FFN: h += relu(X @ w1) @ w2, row by row, single pass.          */
 /* u must hold d_ff floats.                                             */
 /* ------------------------------------------------------------------ */
+/* This benchmark's FFN applies ReLU to the layernorm OUTPUT before the first
+ * matmul:  h += relu(x) @ w1 @ w2   (matches the f64 reference and numpy_vec).
+ * So the fused kernel folds relu into the x-streaming pass; the w2 pass is an
+ * outer-product update (unit stride on both w2 rows and h). */
 static void ffn_fused(const float *restrict X, const float *restrict w1,
                       const float *restrict w2, float *restrict Hout,
                       int M, int d, int dff, float *restrict u) {
     for (int i = 0; i < M; i++) {
         const float *x = X + (size_t)i * d;
-        /* u = x @ w1  (d -> d_ff), streaming w1 with unit stride on j */
+        /* u = relu(x) @ w1  (d -> d_ff), streaming w1 with unit stride on j */
         for (int j = 0; j < dff; j++) u[j] = 0.0f;
         for (int k = 0; k < d; k++) {
-            float xk = x[k];
+            float xk = x[k] > 0.0f ? x[k] : 0.0f;   /* ReLU on the input */
             const float *w1k = w1 + (size_t)k * dff;
             for (int j = 0; j < dff; j++) u[j] += xk * w1k[j];
         }
-        /* relu in registers */
-        for (int j = 0; j < dff; j++) u[j] = u[j] > 0.0f ? u[j] : 0.0f;
         /* h += u @ w2, outer-product form: for each j, the d-wide row of w2
          * is contiguous, so both w2 and h stream with unit stride */
         float *hi = Hout + (size_t)i * d;
@@ -251,17 +286,29 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
 
     for (int i = 0; i < L; i++) {
 #if FT_FUSED
+        TIC(ln1);
         layernorm(h, h2, W->ln1g + (size_t)i * d, W->ln1b + (size_t)i * d, W->eps, (int)n, d);
+        TOC(ln1, "ln1");
         if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
+        TIC(qkv);
         ft_mm(h2, W->wqkv + (size_t)i * d * 3 * d, qkv, (int)n, 3 * d, d, 0);
+        TOC(qkv, "qkv");
         if (dbg) { memcpy(dbg, qkv, n * 3 * d * sizeof(float)); dbg += n * 3 * d; }
+        TIC(attn);
         attn_fused(qkv, qkv + d, qkv + 2 * d, ctx, B, S, H, dh, inv, scores, 3 * d);
+        TOC(attn, "attn");
         if (dbg) { memcpy(dbg, ctx, n * d * sizeof(float)); dbg += n * d; }
+        TIC(wo);
         ft_mm(ctx, W->wo + (size_t)i * d * d, h, (int)n, d, d, 1);
+        TOC(wo, "wo");
         if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
+        TIC(ln2);
         layernorm(h, h2, W->ln2g + (size_t)i * d, W->ln2b + (size_t)i * d, W->eps, (int)n, d);
+        TOC(ln2, "ln2");
         if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
+        TIC(ffn);
         ffn_fused(h2, W->w1 + (size_t)i * d * dff, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, urow);
+        TOC(ffn, "ffn");
         if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
 #else
         layernorm(h, h2, W->ln1g + (size_t)i * d, W->ln1b + (size_t)i * d, W->eps, (int)n, d);
@@ -276,15 +323,19 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
         if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
         layernorm(h, h2, W->ln2g + (size_t)i * d, W->ln2b + (size_t)i * d, W->eps, (int)n, d);
         if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
+        for (size_t j = 0; j < n * d; j++) h2[j] = h2[j] > 0.0f ? h2[j] : 0.0f; /* ReLU on ln2 output */
         ft_mm(h2, W->w1 + (size_t)i * d * dff, ffnbuf, (int)n, dff, d, 0);
-        for (size_t j = 0; j < n * dff; j++) ffnbuf[j] = ffnbuf[j] > 0.0f ? ffnbuf[j] : 0.0f;
         ft_mm(ffnbuf, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, 1);
         if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
 #endif
     }
+    TIC(lnf);
     layernorm(h, h2, W->lnfg, W->lnfb, W->eps, (int)n, d);
+    TOC(lnf, "lnf");
     if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
+    TIC(outm);
     ft_mm(h2, W->out_w, out, (int)n, V, d, 0);
+    TOC(outm, "out");
     if (dbg) { memcpy(dbg, out, n * V * sizeof(float)); dbg += n * V; }
     return 0;
 }

@@ -174,3 +174,24 @@ in isolation; full forward ~714 -> remainder is call overhead + noise). ~40 nump
 - Cross-node (aggregate.json): node-1 vs node-3 agree within ~1-5% for same impls (opt12: 131.17 vs 132.47; opt3: 210.9 vs 209.1; opt8: 140.7 vs 146.7). NO >10% discrepancies remain. Earlier FLAGs (opt8/opt12) were impl-version skew (node-1 a1 files measured older code), resolved after re-measure.
 - v5 headroom: opt12 DEFAULT 6.93 GF/s vs ~17 GF/s pure-matmul ceiling (~2.4x overhead); opt7 8.9 GF/s @1.9x overhead — matmul ceiling is the machine limit for these shapes.
 - Fixes in this round: run_all.py JSON parse (multi-line indent bug), eval_latency compact print, node_driver positional upload/download args, remote-dir pre-create, snapshot isolation, IPython echo suppression, leaderboard flat-format + v3 cfg-key support.
+
+## 2026-08-11 — ground-up-c: CORRECT + FAST (attempts 04-06, bench-node-2)
+- ROOT CAUSE FOUND (after many probes): this benchmark's FFN is h += relu(ln2(h)) @ W1 @ W2 —
+  ReLU on the LAYERNORM OUTPUT, BEFORE W1 (matches numpy_vec + f64 ref). My C (and my diagnostic
+  mirror) applied ReLU to the hidden layer (between W1 and W2). Fixed in both ffn paths.
+  Debugging lessons: (1) the colab exec stdout channel interleaved stale kernel output — trust only
+  downloaded JSON files, not exec stdout; (2) stage-diff against numpy_vec (pure arithmetic,
+  done locally) pinpointed h_ffn as the diverging stage.
+- CORRECTNESS: all c_v1..v6 + c_ground_up PASS tiny + default (max_abs_err 0.9-1.9e-6 vs 1e-3 bar),
+  confirmed attempts 04/05/06, plus eval_v3 5-seed stability.
+- LATENCY (3000 iters / 300 warmup, median_us, attempts 05+06):
+    TINY:    c_v6 36.8  c_ground_up 37.4  c_v5 39.1  | numpy_vec 451  | numpy_opt12 target 131.3
+    DEFAULT: c_v6 350-362  c_ground_up 352-354  c_v5 361-366  | numpy_vec 2052-2326 | target 714.6
+  Both configs sub-ms. ~3.6x / ~2.0x faster than the numpy-optimizer targets.
+- KEY OPTIMIZATION: specialized mm_blocked8 kernel (compile-time 8x8 tiles, pragma GCC unroll 8,
+  all dims %8==0) — DEFAULT dropped 1148->366us (v4->v5). Plus dot16 two-chain attention dots,
+  -funroll-loops -fopenmp-simd, OpenMP on tile loops (v6), wrapper-cached buffers.
+- Variant progression (DEFAULT median): v1 naive 2354 -> v2 blocked 1645 -> v3 fused 1327-1763
+  -> v4 +omp 1072-1148 -> v5 spec8x8 361-366 -> v6 +omp+cached 350-362.
+- results/ JSONs: correctness+latency attempts 04,05,06 + evals_v3 a4/a5.
+- c_v6 eval_v3: allocs 11, peak 0.00MB (numpy 19-20, 0.12-0.53MB); cold/steady ratio ~1.0-1.1.

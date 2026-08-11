@@ -1,0 +1,117 @@
+{
+ "impl": "c_v6",
+ "node": "bench-node-2",
+ "generation": "v3",
+ "attempt": 5,
+ "numpy_version": "2.0.2",
+ "n_seeds": 5,
+ "criteria": {
+  "abs_tol": 0.001
+ },
+ "configs": {
+  "tiny": {
+   "correctness_seeds": [
+    {
+     "seed": 0,
+     "max_abs_err": 1.4670277530548503e-06,
+     "pass": true
+    },
+    {
+     "seed": 1,
+     "max_abs_err": 1.2783117836479008e-06,
+     "pass": true
+    },
+    {
+     "seed": 2,
+     "max_abs_err": 1.2357641896443283e-06,
+     "pass": true
+    },
+    {
+     "seed": 3,
+     "max_abs_err": 1.1973886042127013e-06,
+     "pass": true
+    },
+    {
+     "seed": 4,
+     "max_abs_err": 1.2183509423557837e-06,
+     "pass": true
+    }
+   ],
+   "latency_seeds": {
+    "seed_medians_us": [
+     60.454,
+     60.549,
+     61.778999999999996,
+     61.5185,
+     61.244
+    ],
+    "median_of_medians_us": 61.244,
+    "min_median_us": 60.454,
+    "max_median_us": 61.778999999999996,
+    "spread_pct": 2.1917490984880996
+   },
+   "cold": {
+    "cold_first_call_us": 106.794,
+    "steady_median_us": 59.966,
+    "cold_ratio": 1.780909181869726
+   },
+   "alloc": {
+    "current_bytes": 568,
+    "peak_bytes": 1244,
+    "num_allocations": 11
+   }
+  },
+  "default": {
+   "correctness_seeds": [
+    {
+     "seed": 0,
+     "max_abs_err": 1.7868832031253667e-06,
+     "pass": true
+    },
+    {
+     "seed": 1,
+     "max_abs_err": 1.8328372790588077e-06,
+     "pass": true
+    },
+    {
+     "seed": 2,
+     "max_abs_err": 2.0351572317667266e-06,
+     "pass": true
+    },
+    {
+     "seed": 3,
+     "max_abs_err": 2.0289022104602594e-06,
+     "pass": true
+    },
+    {
+     "seed": 4,
+     "max_abs_err": 1.9635564847408915e-06,
+     "pass": true
+    }
+   ],
+   "latency_seeds": {
+    "seed_medians_us": [
+     525.0915,
+     525.748,
+     525.192,
+     513.434,
+     509.50199999999995
+    ],
+    "median_of_medians_us": 525.0915,
+    "min_median_us": 509.50199999999995,
+    "max_median_us": 525.748,
+    "spread_pct": 3.188603773881181
+   },
+   "cold": {
+    "cold_first_call_us": 670.95,
+    "steady_median_us": 523.7945,
+    "cold_ratio": 1.2809412851795887
+   },
+   "alloc": {
+    "current_bytes": 520,
+    "peak_bytes": 1196,
+    "num_allocations": 10
+   }
+  }
+ }
+}

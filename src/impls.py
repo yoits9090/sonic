@@ -205,8 +205,9 @@ _register_c("c_v1", "libft_v1.so")                 # naive matmul, unfused ops, 
 _register_c("c_v2", "libft_v2.so")                 # 8x8 blocked matmul, unfused ops
 _register_c("c_v3", "libft_v3.so")                 # blocked + fused layer ops
 _register_c("c_v4", "libft_v4.so")                 # blocked + fused + OpenMP
-_register_c("c_v5", "libft_v5.so", rw=True, ro=True)  # + static workspace/output reuse
-_register_c("c_ground_up", "libft.so", rw=True, ro=True)  # default best build
+_register_c("c_v5", "libft_v5.so")                 # specialized 8x8 unrolled matmul + fused ops
+_register_c("c_v6", "libft_v6.so", rw=True, ro=True)  # specialized + OpenMP + static buffers
+_register_c("c_ground_up", "libft.so", rw=True, ro=True)  # default best build (v6 kernels)
 
 
 # ---------- numpy-optimizer agents' impls ----------
