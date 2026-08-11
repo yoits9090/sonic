@@ -1,0 +1,114 @@
+"""Drive an eval generation on a colab node: upload code, exec, pull results.
+Usage: python evals/node_driver.py --node bench-node-3 --gen v1 [--attempt N] [--impl numpy_vec] [--timeout 900]
+Writes results/manifest.json attempt log. All compute happens on the node.
+"""
+import argparse, json, os, subprocess, sys, time
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+REMOTE_BASE = "/content/ft_evals3"
+
+UPLOAD_FILES = [
+    "src/config.py", "src/random_state.py", "src/impls.py",
+    "evals/run_all.py", "evals/eval_correctness.py", "evals/eval_latency.py",
+    "evals/eval_v2.py", "evals/eval_v3.py", "evals/registry.py",
+]
+
+RUNNERS = {
+    "v1": ("evals/run_all.py", ["--node", "{node}"]),
+    "v2": ("evals/eval_v2.py", ["--node", "{node}", "--attempt", "{attempt}"]),
+    "v3": ("evals/eval_v3.py", ["--node", "{node}", "--attempt", "{attempt}"]),
+}
+SUMMARY_FILES = {
+    "v1": ["results/{node}_evals.json"],
+    "v2": ["results/evals_v2_{node}.json", "results/evals_v2_{node}_{impl}_a{attempt}.json"],
+    "v3": ["results/evals_v3_{node}.json", "results/evals_v3_{node}_{impl}_a{attempt}.json"],
+}
+
+
+def sh(args, timeout=300):
+    r = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    if r.returncode != 0:
+        raise RuntimeError(f"cmd failed ({r.returncode}): {' '.join(args)}\n{r.stdout[-2000:]}\n{r.stderr[-2000:]}")
+    return r.stdout
+
+
+def next_attempt(node, gen):
+    man_path = os.path.join(ROOT, "results", "manifest.json")
+    man = json.load(open(man_path)) if os.path.exists(man_path) else {"runs": []}
+    n = sum(1 for r in man["runs"] if r["node"] == node and r["gen"] == gen)
+    return n + 1
+
+
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--node", required=True)
+    ap.add_argument("--gen", required=True, choices=sorted(RUNNERS))
+    ap.add_argument("--attempt", type=int, default=None)
+    ap.add_argument("--impl", default=None)
+    ap.add_argument("--timeout", type=float, default=1200)
+    a = ap.parse_args()
+    node, gen = a.node, a.gen
+    attempt = a.attempt if a.attempt else next_attempt(node, gen)
+    script, tmpl_args = RUNNERS[gen]
+    args = [t.format(node=node, attempt=attempt, impl=a.impl or "*") for t in tmpl_args]
+    if a.impl:
+        args += ["--impl", a.impl]
+    if gen == "v1" and "--iters" not in args:
+        pass  # run_all.py hardcodes 3000 iters
+
+    # 1. upload
+    for f in UPLOAD_FILES:
+        remote = f"{REMOTE_BASE}/{os.path.dirname(f)}/{os.path.basename(f)}"
+        print(f"[driver] upload {f} -> {remote}")
+        sh(["colab", "--auth", "adc", "upload", "-s", node, "-f", os.path.join(ROOT, f), remote], timeout=180)
+    # 2. exec via stdin runpy (keeps __file__ based paths correct on the node)
+    runner = (f"import runpy, sys\n"
+              f"sys.path.insert(0, '{REMOTE_BASE}')\n"
+              f"sys.argv = ['{script}'] + {args!r}\n"
+              f"runpy.run_path('{REMOTE_BASE}/{script}', run_name='__main__')\n")
+    print(f"[driver] exec {script} args={args} timeout={a.timeout}")
+    r = subprocess.run(["colab", "--auth", "adc", "exec", "-s", node, "--timeout", str(a.timeout)],
+                       input=runner, capture_output=True, text=True, timeout=a.timeout + 120)
+    out = (r.stdout or "") + (r.stderr or "")
+    print(out[-4000:])
+    if r.returncode != 0 and "WROTE" not in out:
+        raise RuntimeError(f"exec failed rc={r.returncode}")
+    # 3. download
+    os.makedirs(os.path.join(ROOT, "results"), exist_ok=True)
+    downloaded = []
+    for pat in SUMMARY_FILES[gen]:
+        fname = pat.format(node=node, attempt=attempt, impl=a.impl or "*")
+        if "*" in fname and gen != "v1":
+            continue  # per-impl files handled below
+        remote = f"{REMOTE_BASE}/{fname}"
+        local = os.path.join(ROOT, "results", os.path.basename(fname))
+        try:
+            sh(["colab", "--auth", "adc", "download", "-s", node, "-f", remote, local], timeout=180)
+            downloaded.append(os.path.basename(fname))
+        except RuntimeError as e:
+            print(f"[driver] download warn: {e}")
+    if a.impl is None and gen in ("v2", "v3"):
+        # per-impl files: guess from summary json
+        sum_local = os.path.join(ROOT, "results", os.path.basename(SUMMARY_FILES[gen][0].format(node=node, attempt=attempt)))
+        if os.path.exists(sum_local):
+            data = json.load(open(sum_local))
+            for impl in data.get("impls", {}):
+                fname = SUMMARY_FILES[gen][1].format(node=node, attempt=attempt, impl=impl)
+                remote = f"{REMOTE_BASE}/{fname}"
+                local = os.path.join(ROOT, "results", os.path.basename(fname))
+                try:
+                    sh(["colab", "--auth", "adc", "download", "-s", node, "-f", remote, local], timeout=180)
+                    downloaded.append(os.path.basename(fname))
+                except RuntimeError as e:
+                    print(f"[driver] download warn: {e}")
+    # 4. manifest
+    man_path = os.path.join(ROOT, "results", "manifest.json")
+    man = json.load(open(man_path)) if os.path.exists(man_path) else {"runs": []}
+    man["runs"].append({"ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "node": node, "gen": gen,
+                        "attempt": attempt, "impl": a.impl, "files": downloaded})
+    json.dump(man, open(man_path, "w"), indent=1)
+    print(f"[driver] DONE attempt {attempt} files: {downloaded}")
+
+
+if __name__ == "__main__":
+    main()
