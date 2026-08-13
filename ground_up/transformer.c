@@ -63,18 +63,67 @@ void ft_mm(const float *A, const float *B, float *C,
 #define FT_FFN_MM 0
 #endif
 
-/* exp(x) for x <= 0, ~3e-9 relative error (Chebyshev-node LS fit of 2^f on
- * [0,1), degree 6), ~3-4x faster than glibc expf and fully vectorizable:
- * exp(x) = 2^(x*log2e); the integer part is folded into the float exponent
- * bits (branch-free, SIMD-friendly) instead of a scalar ldexpf. */
+#if !defined(FT_INT8)
+#define FT_INT8 0
+#endif
+#if !defined(FT_INT8_ATTN)
+#define FT_INT8_ATTN 0
+#endif
+#if !defined(FT_BF16)
+#define FT_BF16 0
+#endif
+
+/* Precision-knob dispatch: MM_W = weight matmuls (static B, cacheable),
+ * MM_A = attention matmuls (scratch B, quantized per call).
+ * All knobs are no-ops at their default (0) values: the fp32 champion
+ * path stays bit-identical. */
+void ft_mm_i8(const float *A, const float *B, float *C, int M, int N, int K, int acc, int cache_b);
+void ft_mm_bf16(const float *A, const float *B, float *C, int M, int N, int K, int acc);
+#if FT_INT8
+#define MM_W(A,B,C,M,N,K,acc) ft_mm_i8((A),(B),(C),(M),(N),(K),(acc),1)
+#define MM_A(A,B,C,M,N,K,acc) ft_mm_i8((A),(B),(C),(M),(N),(K),(acc),0)
+#elif FT_BF16
+#define MM_W(A,B,C,M,N,K,acc) ft_mm_bf16((A),(B),(C),(M),(N),(K),(acc))
+#define MM_A(A,B,C,M,N,K,acc) ft_mm_bf16((A),(B),(C),(M),(N),(K),(acc))
+#elif FT_INT8_ATTN
+#define MM_W(A,B,C,M,N,K,acc) ft_mm((A),(B),(C),(M),(N),(K),(acc))
+#define MM_A(A,B,C,M,N,K,acc) ft_mm_i8((A),(B),(C),(M),(N),(K),(acc),0)
+#else
+#define MM_W(A,B,C,M,N,K,acc) ft_mm((A),(B),(C),(M),(N),(K),(acc))
+#define MM_A(A,B,C,M,N,K,acc) ft_mm((A),(B),(C),(M),(N),(K),(acc))
+#endif
+
+/* exp(x) for x <= 0: Chebyshev-node LS fit of 2^f on [0,1), degree
+ * FT_EXP_DEG (3/4/5/6). exp(x) = 2^(x*log2e); the integer part is folded
+ * into the float exponent bits (branch-free, SIMD-friendly).
+ * Max rel errors: deg3 ~1e-4, deg4 ~3.5e-6, deg5 ~1e-7, deg6 ~2.5e-9
+ * (deg6 coefficients are the original v14 champion set, kept bit-identical).
+ * ~3-4x faster than glibc expf. */
+#if !defined(FT_EXP_DEG)
+#define FT_EXP_DEG 6
+#endif
+#if FT_EXP_DEG == 6
+#define FT_EXP_POLY(f) (1.0000000025791764f + (f) * (0.6931469288712638f + (f) * (0.24023050092090045f \
+              + (f) * (0.055480429145105356f + (f) * (0.009684577477983502f \
+              + (f) * (0.0012387831477474515f + (f) * 0.0002187751645542967f))))))
+#elif FT_EXP_DEG == 5
+#define FT_EXP_POLY(f) (9.999998983500e-01f + (f) * (6.931544896632e-01f + (f) * (2.401418182014e-01f \
+              + (f) * (5.586033707741e-02f + (f) * (8.949590423122e-03f + (f) * 1.893754058301e-03f)))))
+#elif FT_EXP_DEG == 4
+#define FT_EXP_POLY(f) (1.000003492908e+00f + (f) * (6.929729221730e-01f + (f) * (2.416043572701e-01f \
+              + (f) * (5.174499776409e-02f + (f) * 1.367030945336e-02f))))
+#elif FT_EXP_DEG == 3
+#define FT_EXP_POLY(f) (9.999002881728e-01f + (f) * (6.963247710916e-01f + (f) * (2.246931557640e-01f \
+              + (f) * 7.896725704217e-02f)))
+#else
+#error "FT_EXP_DEG must be 3, 4, 5 or 6"
+#endif
 static inline float fast_exp(float x) {
     if (x < -88.0f) return 0.0f;   /* underflow guard (masked entries) */
     float t = x * 1.4426950408889634f;
     float n = floorf(t);
     float f = t - n;
-    float p = 1.0000000025791764f + f * (0.6931469288712638f + f * (0.24023050092090045f
-              + f * (0.055480429145105356f + f * (0.009684577477983502f
-              + f * (0.0012387831477474515f + f * 0.0002187751645542967f)))));
+    float p = FT_EXP_POLY(f);
     union { float f; int32_t i; } u;
     u.f = p;
     u.i += (int32_t)n << 23;   /* scale by 2^n via exponent field */
@@ -190,7 +239,7 @@ static void attn_blocked(const float *restrict Q, const float *restrict K,
             /* K^T (dh x S) from kc (S x dh) */
             for (int k = 0; k < S; k++)
                 for (int j = 0; j < dh; j++) kt[j * S + k] = kc[k * dh + j];
-            ft_mm(qc, kt, att, S, S, dh, 0);     /* scores (S x S) */
+            MM_A(qc, kt, att, S, S, dh, 0);   /* scores (S x S) */
             for (int i = 0; i < S * S; i++) att[i] *= inv;   /* 1/sqrt(dh) like the ref */
             /* causal mask + row softmax (vectorized over the contiguous row) */
             for (int s = 0; s < S; s++) {
@@ -208,7 +257,7 @@ static void attn_blocked(const float *restrict Q, const float *restrict K,
                 float r = 1.0f / sum;
                 for (int k = 0; k < S; k++) row[k] *= r;
             }
-            ft_mm(att, vc, qc, S, dh, S, 0);      /* ctx (S x dh) into qc (reused) */
+            MM_A(att, vc, qc, S, dh, S, 0);    /* ctx (S x dh) into qc (reused) */
             for (int k = 0; k < S; k++) {
                 float *dst = ctx + ((size_t)b * S + k) * d + h * dh;
                 memcpy(dst, qc + (size_t)k * dh, (size_t)dh * sizeof(float));
@@ -420,7 +469,7 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
         TOC(ln1, "ln1");
         if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
         TIC(qkv);
-        ft_mm(h2, W->wqkv + (size_t)i * d * 3 * d, qkv, (int)n, 3 * d, d, 0);
+        MM_W(h2, W->wqkv + (size_t)i * d * 3 * d, qkv, (int)n, 3 * d, d, 0);
         TOC(qkv, "qkv");
         if (dbg) { memcpy(dbg, qkv, n * 3 * d * sizeof(float)); dbg += n * 3 * d; }
         TIC(attn);
@@ -432,7 +481,7 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
         TOC(attn, "attn");
         if (dbg) { memcpy(dbg, ctx, n * d * sizeof(float)); dbg += n * d; }
         TIC(wo);
-        ft_mm(ctx, W->wo + (size_t)i * d * d, h, (int)n, d, d, 1);
+        MM_W(ctx, W->wo + (size_t)i * d * d, h, (int)n, d, d, 1);
         TOC(wo, "wo");
         if (dbg) { memcpy(dbg, h, n * d * sizeof(float)); dbg += n * d; }
         TIC(ln2);
@@ -442,8 +491,8 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
         TIC(ffn);
 #if FT_FFN_MM
         for (size_t j = 0; j < n * d; j++) h2[j] = h2[j] > 0.0f ? h2[j] : 0.0f; /* ReLU on ln2 output */
-        ft_mm(h2, W->w1 + (size_t)i * d * dff, ffnbuf, (int)n, dff, d, 0);
-        ft_mm(ffnbuf, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, 1);
+        MM_W(h2, W->w1 + (size_t)i * d * dff, ffnbuf, (int)n, dff, d, 0);
+        MM_W(ffnbuf, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, 1);
 #else
         ffn_fused(h2, W->w1 + (size_t)i * d * dff, W->w2 + (size_t)i * dff * d, h, (int)n, d, dff, urow);
 #endif
@@ -473,7 +522,7 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
     TOC(lnf, "lnf");
     if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
     TIC(outm);
-    ft_mm(h2, W->out_w, out, (int)n, V, d, 0);
+    MM_W(h2, W->out_w, out, (int)n, V, d, 0);
     TOC(outm, "out");
     if (dbg) { memcpy(dbg, out, n * V * sizeof(float)); dbg += n * V; }
     return 0;

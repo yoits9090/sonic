@@ -1,0 +1,147 @@
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 64781)
+Traceback (most recent call last):
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 691, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 361, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 755, in __init__
+    self.handle()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 440, in handle
+    self.handle_one_request()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 428, in handle_one_request
+    method()
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 460, in do_GET
+    self._send(200, "image/png", make_plot(), cache="no-store")
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 484, in _send
+    self.wfile.write(body)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 834, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56132)
+Traceback (most recent call last):
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 691, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 361, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 755, in __init__
+    self.handle()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 440, in handle
+    self.handle_one_request()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 428, in handle_one_request
+    method()
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 460, in do_GET
+    self._send(200, "image/png", make_plot(), cache="no-store")
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 484, in _send
+    self.wfile.write(body)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 834, in write
+    self._sock.sendall(b)
+ConnectionResetError: [Errno 54] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56139)
+Traceback (most recent call last):
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 691, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 361, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 755, in __init__
+    self.handle()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 440, in handle
+    self.handle_one_request()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 428, in handle_one_request
+    method()
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 460, in do_GET
+    self._send(200, "image/png", make_plot(), cache="no-store")
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 484, in _send
+    self.wfile.write(body)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 834, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56166)
+Traceback (most recent call last):
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 691, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 361, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 755, in __init__
+    self.handle()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 440, in handle
+    self.handle_one_request()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 428, in handle_one_request
+    method()
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 460, in do_GET
+    self._send(200, "image/png", make_plot(), cache="no-store")
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 484, in _send
+    self.wfile.write(body)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 834, in write
+    self._sock.sendall(b)
+ConnectionResetError: [Errno 54] Connection reset by peer
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56185)
+Traceback (most recent call last):
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 691, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 361, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 755, in __init__
+    self.handle()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 440, in handle
+    self.handle_one_request()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 428, in handle_one_request
+    method()
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 460, in do_GET
+    self._send(200, "image/png", make_plot(), cache="no-store")
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 484, in _send
+    self.wfile.write(body)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 834, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56240)
+Traceback (most recent call last):
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 691, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 361, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 755, in __init__
+    self.handle()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 440, in handle
+    self.handle_one_request()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 428, in handle_one_request
+    method()
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 460, in do_GET
+    self._send(200, "image/png", make_plot(), cache="no-store")
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 484, in _send
+    self.wfile.write(body)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 834, in write
+    self._sock.sendall(b)
+BrokenPipeError: [Errno 32] Broken pipe
+----------------------------------------
+----------------------------------------
+Exception occurred during processing of request from ('127.0.0.1', 56286)
+Traceback (most recent call last):
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 691, in process_request_thread
+    self.finish_request(request, client_address)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 361, in finish_request
+    self.RequestHandlerClass(request, client_address, self)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 755, in __init__
+    self.handle()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 440, in handle
+    self.handle_one_request()
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/http/server.py", line 428, in handle_one_request
+    method()
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 460, in do_GET
+    self._send(200, "image/png", make_plot(), cache="no-store")
+  File "/Users/ace/projects/sonic/fast-transformer/dash/server.py", line 484, in _send
+    self.wfile.write(body)
+  File "/Users/ace/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/socketserver.py", line 834, in write
+    self._sock.sendall(b)
+ConnectionResetError: [Errno 54] Connection reset by peer
+----------------------------------------

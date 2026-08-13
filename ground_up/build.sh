@@ -35,4 +35,28 @@ echo "== build libft_v14.so (v9 + blocked attention, +omp)"
 $CC $CFLAGS -fopenmp -DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=1 -DFT_ATTN_BLOCK=1 -DFT_OPENMP=1 -o libft_v14.so matmul.c transformer.c -lm
 echo "== build libft.so (default champion: v14 config; wrapper reuses workspace/output)"
 cp libft_v14.so libft.so
+
+# ---- novelty-push variants (error-budget dials; naming LOCKED in notes/error-pareto.md) ----
+# champion flag set; new knobs are no-ops at their default values.
+CHAMP_FLAGS="-DFT_KERNEL=3 -DFT_FUSED=1 -DFT_FASTEXP=1 -DFT_FFN_MM=1 -DFT_TILE16=1 -DFT_ATTN_BLOCK=1 -DFT_OPENMP=1"
+echo "== build libft_fp32_e6.so (bit-identical champion alias)"
+cp libft_v14.so libft_fp32_e6.so
+for DEG in 4 3; do
+  echo "== build libft_fp32_e$DEG.so (exp-degree dial)"
+  $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_EXP_DEG=$DEG -o libft_fp32_e$DEG.so matmul.c transformer.c -lm
+done
+for DEG in 6 4 3; do
+  echo "== build libft_int8_e$DEG.so (int8 GEMM everywhere)"
+  $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_INT8=1 -DFT_EXP_DEG=$DEG -o libft_int8_e$DEG.so matmul.c transformer.c -lm
+done
+for DEG in 6 4 3; do
+  echo "== build libft_int8_attn_e$DEG.so (int8 attention GEMMs only)"
+  $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_INT8_ATTN=1 -DFT_EXP_DEG=$DEG -o libft_int8_attn_e$DEG.so matmul.c transformer.c -lm
+done
+for DEG in 6 4 3; do
+  echo "== build libft_bf16_e$DEG.so (bf16 truncation)"
+  $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_BF16=1 -DFT_EXP_DEG=$DEG -o libft_bf16_e$DEG.so matmul.c transformer.c -lm
+done
+echo "== build libft_prof.so (FT_PROFILE per-op attribution)"
+$CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_PROFILE=1 -o libft_prof.so matmul.c transformer.c -lm
 ls -la libft*.so

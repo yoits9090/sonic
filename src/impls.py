@@ -117,15 +117,15 @@ class _CImpl:
         self.reuse_workspace = reuse_workspace
         self.reuse_output = reuse_output
         self._cache_key = None
+        self._wkey = None
         self._st = None
         self._ws = None
         self._out = None
         self._keep = None
 
-    def _prepare(self, W, cfg, B, S):
-        key = (id(W), cfg.d_model, cfg.d_ff, cfg.n_heads, cfg.vocab, cfg.n_layers, B, S)
-        if key == self._cache_key:
-            return
+    def _prepare_w(self, W, cfg):
+        """Build the flat fp32 weight blocks + ft_weights struct.
+        Weight content depends only on (W, cfg) — not on (B, S)."""
         d, dff, L = cfg.d_model, cfg.d_ff, cfg.n_layers
 
         def cat(names):
@@ -174,6 +174,21 @@ class _CImpl:
         st.eps = float(cfg.eps)
         self._st = st
 
+    def _prepare(self, W, cfg, B, S):
+        key = (id(W), cfg.d_model, cfg.d_ff, cfg.n_heads, cfg.vocab, cfg.n_layers, B, S)
+        if key == self._cache_key:
+            return
+        # Weight blocks do not depend on (B, S): prepare once per (W, cfg) so
+        # weight pointers stay stable across cells (the C int8 path caches
+        # quantized weights by pointer). Workspace/output still key on (B, S).
+        wkey = (id(W), cfg.d_model, cfg.d_ff, cfg.n_heads, cfg.vocab, cfg.n_layers)
+        if wkey != self._wkey:
+            self._wkey = wkey
+            self._prepare_w(W, cfg)
+        d, dff, L = cfg.d_model, cfg.d_ff, cfg.n_layers
+
+
+
         need = self.lib.ft_scratch_bytes(B, S, d, dff)
         self._ws = np.empty((need + 3) // 4, dtype=np.float32)  # bytes -> floats
         self._out = np.empty((B, S, cfg.vocab), dtype=np.float32)
@@ -219,6 +234,20 @@ _register_c("c_v11", "libft_v11.so", rw=True, ro=True)  # 4x16 tiles always
 _register_c("c_v12", "libft_v12.so", rw=True, ro=True)  # 8x8 tiles always
 _register_c("c_v14", "libft_v14.so", rw=True, ro=True)  # blocked-attention + fused-exp
 _register_c("c_ground_up", "libft.so", rw=True, ro=True)  # default best build (v9 kernels)
+
+# ---- novelty-push precision/exp-degree variants (naming LOCKED in notes/error-pareto.md) ----
+_register_c("c_fp32_e6", "libft_fp32_e6.so", rw=True, ro=True)   # bit-identical champion alias
+_register_c("c_fp32_e4", "libft_fp32_e4.so", rw=True, ro=True)   # fast-exp Chebyshev deg 4
+_register_c("c_fp32_e3", "libft_fp32_e3.so", rw=True, ro=True)   # fast-exp Chebyshev deg 3
+_register_c("c_int8_e6", "libft_int8_e6.so", rw=True, ro=True)   # int8 GEMM everywhere
+_register_c("c_int8_e4", "libft_int8_e4.so", rw=True, ro=True)
+_register_c("c_int8_e3", "libft_int8_e3.so", rw=True, ro=True)
+_register_c("c_int8_attn_e6", "libft_int8_attn_e6.so", rw=True, ro=True)  # int8 attention GEMMs only
+_register_c("c_int8_attn_e4", "libft_int8_attn_e4.so", rw=True, ro=True)
+_register_c("c_int8_attn_e3", "libft_int8_attn_e3.so", rw=True, ro=True)
+_register_c("c_bf16_e6", "libft_bf16_e6.so", rw=True, ro=True)   # bf16 truncation, fp32 accumulate
+_register_c("c_bf16_e4", "libft_bf16_e4.so", rw=True, ro=True)
+_register_c("c_bf16_e3", "libft_bf16_e3.so", rw=True, ro=True)
 
 
 # ---------- numpy-optimizer agents' impls ----------

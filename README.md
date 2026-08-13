@@ -100,6 +100,23 @@ passes all cells.** Champion **c_v6 = 11/18**: sub-ms on ALL B=1 cells (tiny 63-
 default 196-842 us) + B=4 tiny. B>1 gap: default B=4 S=32 is 1482 us (~2x from sub-ms);
 B=16 always >2.7 ms. Roofline: node peak GEMM 57.4 GF/s; c_v6 efficiency 0.31, numpy
 best 0.21. Cold-start: c_v6 first call 1001 us vs 371 us steady (ctypes prep dominates).
+## Novelty push (error-budget dials, Aug 2026) — v8
+
+**Latency-vs-error Pareto frontier is flat fp32** (18 cells, budgets 1e-3/1e-2):
+fp32 wins every cell; int8 (u8xs8 AVX2 + VNNI kernels, per-channel scales) and
+bf16 (RNE truncation) are dominated everywhere — slower AND less accurate at
+these shapes on an AVX2-only 2-core Xeon (no VNNI). The one real dial:
+Chebyshev fast-exp degree — `c_fp32_e3` passes 1e-3 (err ~2e-4) and wins
+default B1 s16/s32/s64 + B16 s32 by 1-5%; `c_fp32_e4` is free (~1e-5 err).
+
+- Cost model (54 cells, median 3.9% err): `us = 23.2 + 3.66e-5*FLOPs + 1.70e-3*B*S^2`
+  -> 23us fixed overhead + 27.3 GF/s effective GEMM (~0.45 of peak).
+- Attribution (FT_PROFILE): out-projection dominates (31% tiny / 49% default);
+  then FFN/attn/QKV; layernorms ~2% each. The out GEMM is the next target.
+- 13/18 cells sub-ms at 1e-3 on ft-node-2.
+- Full detail: notes/novelty_findings.md, results/pareto_ft-node-2.md,
+  evals/{eval_v8.py, pareto_analysis.py, cost_model.py}.
+
 ## Replay
 
 ```

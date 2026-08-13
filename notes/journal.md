@@ -256,3 +256,54 @@ Measured on bench-node-3 (2-core Xeon 2.2GHz, numpy 2.0.2), cross-validated vs b
 - **v5** (headroom: per-cfg FLOPs, matmul ceiling, overhead x): C fused kernels EXCEED the numpy matmul ceiling (20.1 GF/s vs 16.9) — numpy best 8.9 GF/s @ 1.9x overhead; quantified the 2-core machine's real ceiling.
 - **v6** (op-domain sub-ms: 18 cells, roofline, cold): no impl passes all cells; numpy max 6/18 (B=1-only viability), C v6 11/18, **c_ground_up v14 13/18** closing the B=4 frontier; remaining gaps are roofline-bound, not software-bound.
 - Cross-node integrity: aggregate flags >10% discrepancies; all champion numbers verified within 3-6% across bench-node-2/3; no unresolved anomalies.
+
+## 2026-08-12 (parent/sonic — novelty push kickoff)
+- Provisioned ft-node-1 (2-core Xeon @2.2GHz, 13.6GB); ft-node-2 quota-blocked (TooManyAssignments; brushie sessions occupy slots).
+- Baseline on ft-node-1: c_ground_up tiny 35.1us / default 260.9us, err ~1.1e-6 pass. Matches prior cross-node numbers.
+- Plan (notes/pipeline.md): v7 cycle attribution + cost model -> int8/bf16 + exp-degree dial -> latency-vs-error Pareto (budgets 1e-3/1e-2) -> close remaining v6 cells (default b4s64, B=16) -> writeup.
+- Spawned recursive workers: v7-attribution, int8-kernels, error-pareto (deepseek-v4-pro). Parent heartbeat supervises node runs every 12m.
+- Note: colab CLI download has no -f flag (old driver scripts outdated).
+
+## 2026-08-12 — error-pareto: Pareto sweep design + runner + analysis (agent: error-pareto v2)
+- DESIGN LOCKED. Levers: exp degree {6,4,3} x GEMM precision {fp32,int8,int8_attn,bf16}
+  x 18 v6 cells x budgets {1e-3,1e-2}. Naming table (coordinated with int8-kernels,
+  ack pending): libft_<prec>_e<deg>.so / registry c_<prec>_e<deg>; c_fp32_e6 === champion
+  (libft.so, unchanged). Build priority: fp32_e4/e3 -> int8_e6/int8_attn_e6 -> bf16_e6
+  -> cross terms.
+- Deliverables written + smoke-tested: notes/error-pareto.md (design + measured
+  baseline + closing requirements), evals/eval_v8.py (parameterized runner,
+  --impl/--cfg/--batch/--seq/--budget/--attempt/--smoke; per-attempt JSON
+  {max_abs_err, median_us, p99_us, gflops, budget_pass per budget, sub_ms};
+  budget_pass is post-hoc arithmetic on err, no per-budget rerun; lazy c_* .so
+  registration if int8-kernels' registry entries not yet landed),
+  evals/pareto_analysis.py (per-(cell,budget) winner = fastest impl with
+  err < budget; min-median across attempts; outputs pareto_<node>.md/.json +
+  _frontier_tiny/_frontier_default/_summary PNGs; incremental — tolerates
+  missing impls; no-data placeholder path).
+- Smoke tests (local, synthetic): runner budget_pass JSON correct on numpy_opt2;
+  analysis on 5 fake impls x 4 cells produced correct winners/frontier sets
+  (int8_e6 wins 1e-2, int8_attn_e6 wins 1e-3, fp32_e3 on frontier), md/json/pngs
+  all emitted; no-data path OK. Matplotlib required for plots (kernel venv has it).
+- Measured champion baseline (ft-node-1, evals_v6): 12/18 cells sub-ms at 1e-3
+  (err 1.1-2.3e-6 everywhere). Over-sub-ms cells + speedup needed to close:
+  default_b4_s32 1086.8us (>=1.09x), tiny_b16_s64 1714.9us (>=1.72x),
+  default_b4_s64 2203.3us (>=2.21x), default_b16_s16 2179.6us (>=2.18x),
+  default_b16_s32 4532.0us (>=4.53x), default_b16_s64 9624.8us (>=9.62x).
+- Prediction: int8 (~2-3x) closes the first four (needs near-ideal int8_attn for
+  b4_s64); b16_s32/s64 are beyond int8 at 1e-3 — frontier quantifies the gap
+  instead. Target: 15/18 sub-ms at 1e-3, 15-16/18 at 1e-2.
+- ASKS parent: (1) run `python evals/eval_v8.py --node ft-node-1` once build.sh
+  emits the new .so files (start with --impl c_fp32_e6,c_fp32_e4,c_fp32_e3 if the
+  full build isn't ready), (2) download results/, (3) run
+  `python evals/pareto_analysis.py --node ft-node-1` (I will re-run/populate on
+  each new data drop).
+— signed: error-pareto (v2), 2026-08-12
+
+## 2026-08-12/13 (parent/sonic — novelty push, executed)
+- v8 Pareto sweep on ft-node-2 (AVX2-only Xeon, runtime-probed: no VNNI): fp32 dominates all 18 cells at 1e-3/1e-2. int8/bf16 never win a cell (slower + less accurate).
+- Cost model (evals/cost_model.py, 54 cells, median 3.9% err): us = 23.2 + 3.66e-5*FLOPs + 1.70e-3*B*S^2. Effective GEMM 27.3 GF/s ~ 0.45 peak.
+- Attribution (FT_PROFILE build): out-projection = 31% tiny / 49% default of stage time — the next optimization target.
+- New impls: c_fp32_e4/e3 (exp dial; e3 wins 4 cells by 1-5% at 1e-3), c_int8_e{6,4,3}, c_int8_attn_e{6,4,3}, c_bf16_e{6,4,3} (all built + correctness-verified; quantized variants are frontier-negative findings).
+- Kernel bugs found+fixed by the eval ladder: vpmaddubsw int16 saturation; AVX2 column lane-mixing; int8 cache buffer size-reuse heap corruption; wrapper per-cell weight rebuild churn.
+- Workers: error-pareto v2 delivered eval_v8 + pareto_analysis + design (DONE); v7-attribution v1/v2 and int8-kernels v1/v2 died mid-recon — parent executed those workstreams.
+- Ops lessons: Colab nodes reaped ~every 30-60 min -> all drivers self-contained (upload+extract+build+run in one exec); colab download has no -f flag.
