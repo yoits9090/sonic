@@ -251,6 +251,7 @@ _register_c("c_bf16_e3", "libft_bf16_e3.so", rw=True, ro=True)
 _register_c("c_out_tune_e6", "libft_out_tune_e6.so", rw=True, ro=True)   # tuned out-projection dispatch
 _register_c("c_out_tune_e4", "libft_out_tune_e4.so", rw=True, ro=True)
 _register_c("c_out_tune_e3", "libft_out_tune_e3.so", rw=True, ro=True)
+_register_c("c_out_all_e6", "libft_out_all_e6.so", rw=True, ro=True)  # serial-out A/B control
 
 
 # ---------- numpy-optimizer agents' impls ----------

@@ -89,3 +89,20 @@ the champion's OMP threading hides that latency better than serial tiles.
 Takeaway: the out GEMM was already at the machine's effective ~27 GF/s; the
 attribution named where time goes, but it was not waste. Knob kept (off by
 default) as a hardware probe. Champion unchanged.
+
+## Follow-up 2: interleaved A/B of the serial-out dispatch — rule REJECTED
+Controlled protocol (ft-node-1, 5 randomized rounds, in-situ full-model bench,
+2000 iters/warmup 100): champion (omp-4x16) vs M<=32-serial vs always-serial:
+- default_b1_s16: 283.7 / 317.0 / 319.3 us  -> serial LOSES (11-13%)
+- default_b1_s32: 257.6 / 296.0 / 286.9 us  -> serial LOSES (11-15%)
+- tiny_b1_s32:    34.6  / 34.4  / 34.1 us   -> tie (serial ~1% faster, noise)
+The earlier +23% b1_s16 "win" was run-condition noise (non-interleaved sweep).
+Conclusion: no evidence ANY out-dispatch beats the champion on this node class.
+FT_OUT_TUNE stays off by default (hardware probe only). Champion unchanged.
+
+## Final hardware verdict (both ft-node-1/2 probed)
+Skylake-SP class: AVX2 only, no AVX512F/VNNI/VL, no AVX-VNNI, no AMX.
+Effective GEMM 27.3 GF/s = ~78% of the 2-core AVX2 theoretical ceiling (~35 GF/s
+= 2 cores x 8 FLOP/cycle x 2.2 GHz). fp32 is at the machine floor; int8/bf16/
+tiling dispatch cannot beat it here. Remaining headroom is hardware-bound
+(VNNI/AMX/more cores) — the v8 frontier + cost model quantify exactly where.

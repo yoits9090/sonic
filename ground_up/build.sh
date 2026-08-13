@@ -60,7 +60,9 @@ done
 echo "== build libft_prof.so (FT_PROFILE per-op attribution)"
 $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_PROFILE=1 -o libft_prof.so matmul.c transformer.c -lm
 for DEG in 6 4 3; do
-  echo "== build libft_out_tune_e$DEG.so (out-projection tuned dispatch)"
+  echo "== build libft_out_tune_e$DEG.so (out-projection tuned dispatch, M<=32 serial)"
   $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_OUT_TUNE=1 -DFT_EXP_DEG=$DEG -o libft_out_tune_e$DEG.so matmul.c transformer.c -lm
 done
+echo "== build libft_out_all_e6.so (out-projection ALWAYS serial, A/B control)"
+$CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_OUT_TUNE=1 -DFT_OUT_TUNE_ALL=1 -DFT_EXP_DEG=6 -o libft_out_all_e6.so matmul.c transformer.c -lm
 ls -la libft*.so

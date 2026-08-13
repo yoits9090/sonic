@@ -314,3 +314,11 @@ Measured on bench-node-3 (2-core Xeon 2.2GHz, numpy 2.0.2), cross-validated vs b
 - v8 sweep vs same-node champion: loses at most cells (-8..-15%), wins default_b1_s16 (+23%), b16_s16 2x worse.
   Hot-cache micro-bench does not transfer (in-situ B cold). Champion stays; knob kept off for future hardware.
 - Also noted: same-impl cross-run noise ~±15% on these nodes (co-tenant contention).
+
+## 2026-08-13 (parent/sonic — final verdict on tuning attempts)
+- Interleaved A/B (5 rounds): serial-out dispatch loses 11-15% on default B1 cells, ties on tiny.
+  Earlier +23% was non-interleaved noise. FT_OUT_TUNE stays off; champion unchanged.
+- CPU probe (both nodes): Skylake-SP AVX2-only; no AVX512/VNNI/AMX anywhere in Colab free CPU pool.
+  Effective GEMM 27.3 GF/s = ~78% of the 2-core AVX2 ceiling -> fp32 is at the machine floor.
+- Project state: v8 frontier (flat fp32), cost model, attribution, all negative results documented.
+  The publishable artifact is the measured frontier + mechanisms + cost model + agent methodology.

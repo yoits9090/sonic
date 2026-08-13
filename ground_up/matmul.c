@@ -207,14 +207,17 @@ static void mm_blocked8_4x32(const float *restrict A, const float *restrict B,
 void ft_mm_out(const float *A, const float *B, float *C, int M, int N, int K, int acc) {
 #if defined(FT_OUT_TUNE)
     if ((M & 7) == 0 && (N & 7) == 0 && (K & 7) == 0) {
-        if (N >= 512 && M >= 192 && M < 1024) {
-            mm_blocked8_4x32(A, B, C, M, N, K, acc);
-            return;
-        }
-        if (M < 384) {
+#if defined(FT_OUT_TUNE_ALL)
+        mm_blocked8_4x16_ctl(A, B, C, M, N, K, acc, 0);
+        return;
+#else
+        /* Evidence-backed rule (interleaved in-situ A/B, ft-node-1): threading
+         * loses at M <= 32 (spawn overhead > 2-thread gain on 2-core nodes). */
+        if (M <= 32) {
             mm_blocked8_4x16_ctl(A, B, C, M, N, K, acc, 0);
             return;
         }
+#endif
     }
 #endif
     mm_blocked8_4x16(A, B, C, M, N, K, acc);
