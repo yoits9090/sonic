@@ -248,6 +248,9 @@ _register_c("c_int8_attn_e3", "libft_int8_attn_e3.so", rw=True, ro=True)
 _register_c("c_bf16_e6", "libft_bf16_e6.so", rw=True, ro=True)   # bf16 truncation, fp32 accumulate
 _register_c("c_bf16_e4", "libft_bf16_e4.so", rw=True, ro=True)
 _register_c("c_bf16_e3", "libft_bf16_e3.so", rw=True, ro=True)
+_register_c("c_out_tune_e6", "libft_out_tune_e6.so", rw=True, ro=True)   # tuned out-projection dispatch
+_register_c("c_out_tune_e4", "libft_out_tune_e4.so", rw=True, ro=True)
+_register_c("c_out_tune_e3", "libft_out_tune_e3.so", rw=True, ro=True)
 
 
 # ---------- numpy-optimizer agents' impls ----------

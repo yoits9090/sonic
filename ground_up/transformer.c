@@ -72,6 +72,17 @@ void ft_mm(const float *A, const float *B, float *C,
 #if !defined(FT_BF16)
 #define FT_BF16 0
 #endif
+#if !defined(FT_OUT_TUNE)
+#define FT_OUT_TUNE 0
+#endif
+
+/* Out-projection-tuned matmul (see matmul.c ft_mm_out). */
+void ft_mm_out(const float *A, const float *B, float *C, int M, int N, int K, int acc);
+#if FT_OUT_TUNE
+#define OUT_MM(A,B,C,M,N,K,acc) ft_mm_out((A),(B),(C),(M),(N),(K),(acc))
+#else
+#define OUT_MM(A,B,C,M,N,K,acc) MM_W((A),(B),(C),(M),(N),(K),(acc))
+#endif
 
 /* Precision-knob dispatch: MM_W = weight matmuls (static B, cacheable),
  * MM_A = attention matmuls (scratch B, quantized per call).
@@ -522,7 +533,7 @@ static int forward_impl(const ft_weights *W, const long long *x, int B, int S,
     TOC(lnf, "lnf");
     if (dbg) { memcpy(dbg, h2, n * d * sizeof(float)); dbg += n * d; }
     TIC(outm);
-    MM_W(h2, W->out_w, out, (int)n, V, d, 0);
+    OUT_MM(h2, W->out_w, out, (int)n, V, d, 0);
     TOC(outm, "out");
     if (dbg) { memcpy(dbg, out, n * V * sizeof(float)); dbg += n * V; }
     return 0;

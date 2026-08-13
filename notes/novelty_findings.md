@@ -75,3 +75,17 @@ above; (b) the cost model with its 23 us overhead intercept; (c) the
 attribution table naming the out-projection as the real target; (d) the
 recursive-agent methodology that produced and fixed the kernel bugs via the
 eval ladder.
+
+## Follow-up: out-projection tuned dispatch (FT_OUT_TUNE) — NEGATIVE result
+Hypothesis: attribution showed out-projection = 31%/49% of stage time ->
+a shape-tuned dispatch (serial 4x16 for thin M, 4x32+OMP for mid-M wide-N,
+from isolated hot-cache micro-benchmarks: up to 39% on the isolated GEMM)
+should speed up the forward pass.
+Result (v8 sweep, ft-node-1, same-node champion comparison): mostly a wash to
+-8..-15% at most cells; wins only default_b1_s16 (+23%); loses default_b16_s16
+by 2x (untested 4x32 regime). Hot-cache isolation does NOT transfer: in-situ
+out_w (128KB) is L2-evicted between calls, so the GEMM is memory-side cold and
+the champion's OMP threading hides that latency better than serial tiles.
+Takeaway: the out GEMM was already at the machine's effective ~27 GF/s; the
+attribution named where time goes, but it was not waste. Knob kept (off by
+default) as a hardware probe. Champion unchanged.

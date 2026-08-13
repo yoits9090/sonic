@@ -307,3 +307,10 @@ Measured on bench-node-3 (2-core Xeon 2.2GHz, numpy 2.0.2), cross-validated vs b
 - Kernel bugs found+fixed by the eval ladder: vpmaddubsw int16 saturation; AVX2 column lane-mixing; int8 cache buffer size-reuse heap corruption; wrapper per-cell weight rebuild churn.
 - Workers: error-pareto v2 delivered eval_v8 + pareto_analysis + design (DONE); v7-attribution v1/v2 and int8-kernels v1/v2 died mid-recon — parent executed those workstreams.
 - Ops lessons: Colab nodes reaped ~every 30-60 min -> all drivers self-contained (upload+extract+build+run in one exec); colab download has no -f flag.
+
+## 2026-08-13 (parent/sonic — out-projection tuning attempt, NEGATIVE)
+- Micro-benchmarked GEMM tile/OMP matrix on ft-node-1 (8 configs x 8 out shapes).
+- Implemented FT_OUT_TUNE dispatch (ft_mm_out: serial 4x16 / 4x32+omp rules) + libft_out_tune_e{6,4,3}.so.
+- v8 sweep vs same-node champion: loses at most cells (-8..-15%), wins default_b1_s16 (+23%), b16_s16 2x worse.
+  Hot-cache micro-bench does not transfer (in-situ B cold). Champion stays; knob kept off for future hardware.
+- Also noted: same-impl cross-run noise ~±15% on these nodes (co-tenant contention).

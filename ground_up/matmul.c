@@ -129,6 +129,35 @@ static void mm_blocked8(const float *restrict A, const float *restrict B,
 
 /* 4x16 register-blocked variant: 64 accumulators (16 ymm) per tile; half
  * the tiles of 8x8 for wide N, at the cost of less B-row reuse across i. */
+#define FT_MM_4X16_TILE_BODY(A, B, C, i0, j0, N, K, acc) \
+    do { \
+        float accv[4][16]; \
+        if (acc) { \
+            for (int ii = 0; ii < 4; ii++) \
+                for (int jj = 0; jj < 16; jj++) \
+                    accv[ii][jj] = C[(size_t)(i0 + ii) * N + j0 + jj]; \
+        } else { \
+            for (int ii = 0; ii < 4; ii++) \
+                for (int jj = 0; jj < 16; jj++) accv[ii][jj] = 0.0f; \
+        } \
+        for (int k = 0; k < K; k += 8) { \
+            for (int ii = 0; ii < 4; ii++) { \
+                const float *ai = A + (size_t)(i0 + ii) * K + k; \
+                float *av = accv[ii]; \
+_Pragma("GCC unroll 8") \
+                for (int kk = 0; kk < 8; kk++) { \
+                    float a = ai[kk]; \
+                    const float *bk = B + (size_t)(k + kk) * N + j0; \
+_Pragma("GCC unroll 16") \
+                    for (int jj = 0; jj < 16; jj++) av[jj] += a * bk[jj]; \
+                } \
+            } \
+        } \
+        for (int ii = 0; ii < 4; ii++) \
+            for (int jj = 0; jj < 16; jj++) \
+                C[(size_t)(i0 + ii) * N + j0 + jj] = accv[ii][jj]; \
+    } while (0)
+
 static void mm_blocked8_4x16(const float *restrict A, const float *restrict B,
                              float *restrict C, int M, int N, int K, int acc) {
 #if !defined(FT_OMP_MIN)
@@ -139,33 +168,56 @@ static void mm_blocked8_4x16(const float *restrict A, const float *restrict B,
 #endif
     for (int j0 = 0; j0 < N; j0 += 16) {   /* j-outer: B streams once, A (small) is re-read */
         for (int i0 = 0; i0 < M; i0 += 4) {
-            float accv[4][16];
-            if (acc) {
-                for (int ii = 0; ii < 4; ii++)
-                    for (int jj = 0; jj < 16; jj++)
-                        accv[ii][jj] = C[(size_t)(i0 + ii) * N + j0 + jj];
-            } else {
-                for (int ii = 0; ii < 4; ii++)
-                    for (int jj = 0; jj < 16; jj++) accv[ii][jj] = 0.0f;
-            }
-            for (int k = 0; k < K; k += 8) {
-                for (int ii = 0; ii < 4; ii++) {
-                    const float *ai = A + (size_t)(i0 + ii) * K + k;
-                    float *av = accv[ii];
-#pragma GCC unroll 8
-                    for (int kk = 0; kk < 8; kk++) {
-                        float a = ai[kk];
-                        const float *bk = B + (size_t)(k + kk) * N + j0;
-#pragma GCC unroll 16
-                        for (int jj = 0; jj < 16; jj++) av[jj] += a * bk[jj];
-                    }
-                }
-            }
-            for (int ii = 0; ii < 4; ii++)
-                for (int jj = 0; jj < 16; jj++)
-                    C[(size_t)(i0 + ii) * N + j0 + jj] = accv[ii][jj];
+            FT_MM_4X16_TILE_BODY(A, B, C, i0, j0, N, K, acc);
         }
     }
+}
+
+/* Controlled-OMP 4x16: caller chooses threading (out-projection tuning). */
+static void mm_blocked8_4x16_ctl(const float *restrict A, const float *restrict B,
+                                 float *restrict C, int M, int N, int K, int acc,
+                                 int use_omp) {
+#if defined(FT_OPENMP)
+    if (use_omp) {
+#pragma omp parallel for schedule(static) collapse(2)
+        for (int j0 = 0; j0 < N; j0 += 16) {
+            for (int i0 = 0; i0 < M; i0 += 4) {
+                FT_MM_4X16_TILE_BODY(A, B, C, i0, j0, N, K, acc);
+            }
+        }
+        return;
+    }
+#endif
+    (void)use_omp;
+    for (int j0 = 0; j0 < N; j0 += 16) {
+        for (int i0 = 0; i0 < M; i0 += 4) {
+            FT_MM_4X16_TILE_BODY(A, B, C, i0, j0, N, K, acc);
+        }
+    }
+}
+
+/* Out-projection-tuned matmul (FT_OUT_TUNE): shapes are (n=B*S, V) x (V, d) with
+ * wide N and thin-to-mid M. Dispatch table from ft-node-1 micro-benchmarks
+ * (Aug 2026): 4x32+omp wins mid-M wide-N (M=512: 1776->1083us, 39%); serial
+ * 4x16 wins small M (threading overhead dominates: M=128: 342->274us, 20%;
+ * M=32: 88->74us via 4x32 serial); omp 4x16 stays for M>=1024. */
+static void mm_blocked8_4x32(const float *restrict A, const float *restrict B,
+                             float *restrict C, int M, int N, int K, int acc);
+
+void ft_mm_out(const float *A, const float *B, float *C, int M, int N, int K, int acc) {
+#if defined(FT_OUT_TUNE)
+    if ((M & 7) == 0 && (N & 7) == 0 && (K & 7) == 0) {
+        if (N >= 512 && M >= 192 && M < 1024) {
+            mm_blocked8_4x32(A, B, C, M, N, K, acc);
+            return;
+        }
+        if (M < 384) {
+            mm_blocked8_4x16_ctl(A, B, C, M, N, K, acc, 0);
+            return;
+        }
+    }
+#endif
+    mm_blocked8_4x16(A, B, C, M, N, K, acc);
 }
 
 /* 4x32 tile: two 16-wide halves per (ii,kk) share the scalar a-load and

@@ -59,4 +59,8 @@ for DEG in 6 4 3; do
 done
 echo "== build libft_prof.so (FT_PROFILE per-op attribution)"
 $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_PROFILE=1 -o libft_prof.so matmul.c transformer.c -lm
+for DEG in 6 4 3; do
+  echo "== build libft_out_tune_e$DEG.so (out-projection tuned dispatch)"
+  $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_OUT_TUNE=1 -DFT_EXP_DEG=$DEG -o libft_out_tune_e$DEG.so matmul.c transformer.c -lm
+done
 ls -la libft*.so
