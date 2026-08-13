@@ -1,6 +1,6 @@
 # Pareto frontier — latency vs error (node: ft-node-2)
 
-Generated: 2026-08-13 02:32:03 by evals/pareto_analysis.py
+Generated: 2026-08-13 02:37:08 by evals/pareto_analysis.py
 Champion impl: `c_fp32_e6` (fp32, exp-degree 6; err ~1.1e-6). Budgets: max_abs_err < 0.001, 0.01 vs f64 ref.
 Impls with data: ['c_bf16_e6', 'c_fp32_e3', 'c_fp32_e4', 'c_fp32_e6', 'c_int8_attn_e6', 'c_int8_e6']
 Convention: min median_us across attempts per (impl, cell).

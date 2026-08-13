@@ -37,3 +37,11 @@ Local results: `results/`. Remote->local: `colab --auth adc download -s ft-node-
 - HB#7 (16:02): error-pareto v2 landed evals/pareto_analysis.py (imports OK, incremental frontier, min-median convention). All 3 workers active (error-pareto ~done, int8-kernels v2 9msgs in, v7-attribution working). ft-node-2: still quota-blocked.
 - HB#8 (16:14): workers all active, no new artifacts this tick (error-pareto finishing journal; int8-kernels studying ctypes wrapper for quantized init; v7-attribution in-flight). ft-node-2: still quota-blocked.
 - HB#9 (16:26): error-pareto still active (58msgs); v7-attribution at 21msgs ~25min (last 2.3min, likely long code-write; watch next tick); int8-kernels at 15msgs active. No new artifacts. ft-node-2: quota-blocked.
+
+## FINAL STATE (HB ~#14, 02:40)
+- v8 sweep complete: 6 impls x 18 cells on ft-node-2. Pareto: flat fp32 (see notes/novelty_findings.md).
+- Cost model: us = 23.2 + 3.66e-5*FLOPs + 1.70e-3*B*S^2 (median 3.9% err). Attribution: out-projection 31%/49%.
+- Leaderboard updated with v8-derived canonical cells + errors for all 6 novelty impls.
+- Plots: results/pareto_ft-node-2_*.png (3 files). Writeup: notes/novelty_findings.md; README updated.
+- 13/18 cells sub-ms at 1e-3 (fp32_e3 closes default_b4_s32). Remaining 5 cells roofline-bound (no VNNI on this node class) — frontier/cost model quantify the floor.
+- Children all collected (error-pareto v2 delivered eval_v8+pareto_analysis+design; others died in recon, parent executed).

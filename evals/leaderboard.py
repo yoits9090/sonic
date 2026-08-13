@@ -27,6 +27,21 @@ def iter_bench_files():
         yield p, d
 
 
+def extract_v8_records(path, d):
+    """Yield (impl, cfg_key, median_us, node, ts, extra) records from eval_v8 files.
+    Canonical cells: tiny_b1_s16 / default_b1_s32 (matches eval_latency cfgs)."""
+    ts = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(os.path.getmtime(path)))
+    if d.get("generation") != "v8" or not isinstance(d.get("cells"), dict):
+        return
+    impl = d.get("impl")
+    node = d.get("node")
+    for cell, canon in (("tiny_b1_s16", "tiny"), ("default_b1_s32", "default")):
+        c = d["cells"].get(cell)
+        if c and c.get("median_us") and c.get("max_abs_err") is not None:
+            yield impl, canon, float(c["median_us"]), node, ts, {
+                "max_abs_err": c.get("max_abs_err"), "source": "eval_v8"}
+
+
 def extract_records(path, d):
     """Yield (impl, cfg_key, median_us, node, ts) records from a results file."""
     ts = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(os.path.getmtime(path)))
@@ -102,10 +117,14 @@ def cfg_key(cfg):
 def update():
     best = {}  # (impl, cfgkey) -> record
     for path, d in iter_bench_files():
-        for impl, key, med, node, ts in extract_records(path, d):
+        recs = list(extract_records(path, d)) + list(extract_v8_records(path, d))
+        for impl, key, med, node, ts, *extra in recs:
             r = best.setdefault((impl, key), {"median_us": 1e18})
             if med < r["median_us"]:
-                best[(impl, key)] = {"median_us": med, "node": node, "source": os.path.basename(path), "ts": ts}
+                rec = {"median_us": med, "node": node, "source": os.path.basename(path), "ts": ts}
+                if extra:
+                    rec.update(extra[0])
+                best[(impl, key)] = rec
     lb = {"updated_ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
           "impls": {}}
     for (impl, key), r in sorted(best.items()):
