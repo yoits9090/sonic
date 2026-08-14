@@ -322,3 +322,13 @@ Measured on bench-node-3 (2-core Xeon 2.2GHz, numpy 2.0.2), cross-validated vs b
   Effective GEMM 27.3 GF/s = ~78% of the 2-core AVX2 ceiling -> fp32 is at the machine floor.
 - Project state: v8 frontier (flat fp32), cost model, attribution, all negative results documented.
   The publishable artifact is the measured frontier + mechanisms + cost model + agent methodology.
+
+## 2026-08-13 (parent/sonic - final squeeze attempts, all NEGATIVE)
+- Wrapper overhead: 0.5us (2%) - intercept is C-side, not Python.
+- attn_fused: loses 12/18 (scalar loops < blocked kernel).
+- Triangular scores (exact math, half MACs): loses 14/18 - blocked 4x16 beats
+  scalar dots even at 2x MACs. Kernel efficiency > arithmetic reduction on this HW.
+- Champion v14 stands. 13/18 cells, 27.3 GF/s = ~78% of AVX2 2-core ceiling.
+- Ops: colab exec kernel PERSISTS across execs - stale module/.so handles;
+  use restart-kernel between experiments. Zombie sessions: unassign via
+  colab_cli state.client.unassign(endpoint) with AuthProvider.ADC.

@@ -106,3 +106,18 @@ Effective GEMM 27.3 GF/s = ~78% of the 2-core AVX2 theoretical ceiling (~35 GF/s
 = 2 cores x 8 FLOP/cycle x 2.2 GHz). fp32 is at the machine floor; int8/bf16/
 tiling dispatch cannot beat it here. Remaining headroom is hardware-bound
 (VNNI/AMX/more cores) — the v8 frontier + cost model quantify exactly where.
+
+## Follow-up 3: wrapper overhead + attention variants (all NEGATIVE)
+- Wrapper overhead measured (interleaved, 5000 iters): python+ctypes adds only
+  0.5us (2%) on tiny, ~0 on default. The cost model's 23us intercept is C-side
+  per-GEMM fixed cost (loop setup/tile init/writeback across 8 matmul calls),
+  not Python. Nothing to squeeze there.
+- attn_fused (flash-style, already causal): loses 12/18 cells (up to +40% at
+  S=64) - per-query scalar loops can't match the blocked matmul + SIMD softmax.
+- Triangular scores (skip masked triangle, exact math, -47% scores MACs,
+  no qc/kt copies): still loses 14/18 cells (up to +28%) - the dense 4x16
+  kernel beats scalar dot loops even at 2x the MACs.
+- VERDICT: on this 2-core AVX2 Skylake, the v14 blocked kernel structure is
+  optimal; arithmetic reductions that sacrifice kernel efficiency lose. The
+  27.3 GF/s effective rate (~78% of the AVX2 ceiling) is the floor for this
+  kernel class. All variants kept in-repo as hardware probes.

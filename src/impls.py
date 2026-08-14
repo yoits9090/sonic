@@ -252,6 +252,8 @@ _register_c("c_out_tune_e6", "libft_out_tune_e6.so", rw=True, ro=True)   # tuned
 _register_c("c_out_tune_e4", "libft_out_tune_e4.so", rw=True, ro=True)
 _register_c("c_out_tune_e3", "libft_out_tune_e3.so", rw=True, ro=True)
 _register_c("c_out_all_e6", "libft_out_all_e6.so", rw=True, ro=True)  # serial-out A/B control
+_register_c("c_attnfused_e6", "libft_attnfused_e6.so", rw=True, ro=True)  # fused-attention A/B
+_register_c("c_tri_e6", "libft_tri_e6.so", rw=True, ro=True)  # triangular-scores attention A/B
 
 
 # ---------- numpy-optimizer agents' impls ----------

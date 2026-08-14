@@ -65,4 +65,8 @@ for DEG in 6 4 3; do
 done
 echo "== build libft_out_all_e6.so (out-projection ALWAYS serial, A/B control)"
 $CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_OUT_TUNE=1 -DFT_OUT_TUNE_ALL=1 -DFT_EXP_DEG=6 -o libft_out_all_e6.so matmul.c transformer.c -lm
+echo "== build libft_attnfused_e6.so (flash-style fused attention, A/B)"
+$CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_ATTN_BLOCK=0 -DFT_EXP_DEG=6 -o libft_attnfused_e6.so matmul.c transformer.c -lm
+echo "== build libft_tri_e6.so (triangular scores in blocked attention)"
+$CC $CFLAGS -fopenmp $CHAMP_FLAGS -DFT_ATTN_TRI=1 -DFT_EXP_DEG=6 -o libft_tri_e6.so matmul.c transformer.c -lm
 ls -la libft*.so

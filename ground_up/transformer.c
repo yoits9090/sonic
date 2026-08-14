@@ -239,6 +239,28 @@ static void attn_blocked(const float *restrict Q, const float *restrict K,
             float *vc = kc + (size_t)S * dh;     /* S*dh */
             float *kt = vc + (size_t)S * dh;     /* dh*S (same size, separate from att!) */
             float *att = kt + (size_t)S * dh;    /* S*S */
+#if defined(FT_ATTN_TRI)
+            for (int k = 0; k < S; k++) {
+                const float *src = K + ((size_t)b * S + k) * stride + h * dh;
+                memcpy(kc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
+                src = V + ((size_t)b * S + k) * stride + h * dh;
+                memcpy(vc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
+            }
+            /* Triangular scores: row s only needs k <= s (masked region never
+             * computed; the row softmax overwrites it with -1e9 anyway).
+             * Exact same math as the dense version; skips ~half the MACs and
+             * the qc copy + kt transpose. q read straight from the strided
+             * QKV buffer. */
+            for (int s = 0; s < S; s++) {
+                const float *q = Q + ((size_t)b * S + s) * stride + h * dh;
+                float *a = att + (size_t)s * S;
+                for (int k = 0; k <= s; k++) {
+                    float acc = (dh == 16) ? dot16(q, kc + (size_t)k * dh)
+                                           : _dot_generic(q, kc + (size_t)k * dh, dh);
+                    a[k] = acc * inv;
+                }
+            }
+#else
             for (int k = 0; k < S; k++) {
                 const float *src = Q + ((size_t)b * S + k) * stride + h * dh;
                 memcpy(qc + (size_t)k * dh, src, (size_t)dh * sizeof(float));
@@ -252,6 +274,7 @@ static void attn_blocked(const float *restrict Q, const float *restrict K,
                 for (int j = 0; j < dh; j++) kt[j * S + k] = kc[k * dh + j];
             MM_A(qc, kt, att, S, S, dh, 0);   /* scores (S x S) */
             for (int i = 0; i < S * S; i++) att[i] *= inv;   /* 1/sqrt(dh) like the ref */
+#endif
             /* causal mask + row softmax (vectorized over the contiguous row) */
             for (int s = 0; s < S; s++) {
                 float *row = att + (size_t)s * S;
