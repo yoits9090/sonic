@@ -1,8 +1,7 @@
 # sonic
 
-A transformer forward pass written in C and hand-tuned until it runs at the
-machine's practical limit — 35 µs for the TINY config on a 2-core Colab CPU
-node, versus 420 µs for a clean numpy implementation of the same model.
+A from-scratch C implementation of a transformer inference kernel, optimized
+for small model configurations and built without machine-learning dependencies.
 
 ![Benchmarks](docs/benchmarks.png)
 
@@ -30,12 +29,6 @@ through a from-scratch blocked GEMM kernel with compile-time-tuned tiles and
 OpenMP. The softmax exp is a degree-6 Chebyshev fit folded into the float
 exponent field. Everything is fp32; correctness is gated at 1e-3 against a
 float64 numpy reference.
-
-## Status
-
-At the machine floor on Colab CPU nodes (Skylake-class, AVX2): the measured
-latency-vs-error frontier is flat fp32, and int8/bf16/attention variants all
-lose to the fp32 kernel on this hardware — see `notes/novelty_findings.md`.
 
 ## License
 
